@@ -22,6 +22,7 @@ function buildShareUrl(mbps: number) {
 
 
 export function SpeedTest() {
+  const search = useSearch({ from: "/" });
   const [phase, setPhase] = useState<Phase>("idle");
   const [displayed, setDisplayed] = useState(0);
   const [final, setFinal] = useState<number | null>(null);
@@ -30,7 +31,9 @@ export function SpeedTest() {
   const [upload, setUpload] = useState<number | null>(null);
   const [downloadedMB, setDownloadedMB] = useState(0);
   const [uploadedMB, setUploadedMB] = useState(0);
+  const [copied, setCopied] = useState(false);
   const startedRef = useRef(false);
+
 
   const measurePing = useCallback(async (setter: (n: number) => void) => {
     const samples: number[] = [];
