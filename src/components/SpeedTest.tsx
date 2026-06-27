@@ -220,6 +220,20 @@ export function SpeedTest() {
 
   const shownNumber = phase === "done" ? (final ?? 0) : animated;
 
+  const handleShare = useCallback(async () => {
+    if (final === null) return;
+    const url = buildShareUrl(final);
+    const text = `Testnix.net - My internet speed is ${formatSpeed(final)} Mbps. Check your speed at ${url}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback: do nothing if clipboard is unavailable
+    }
+  }, [final]);
+
+
   return (
     <section className="flex w-full max-w-5xl flex-col items-center px-6 text-center">
       <h2 className="mb-6 text-2xl font-bold text-neutral-900 md:text-4xl">
