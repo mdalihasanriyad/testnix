@@ -167,6 +167,16 @@ export function SpeedTest() {
   }, [measurePing, runDownload, runUpload]);
 
   useEffect(() => {
+    if (phase === "done" && final !== null && typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("speed", final.toFixed(2));
+      url.searchParams.set("shared", "1");
+      window.history.replaceState({}, "", url);
+    }
+  }, [phase, final]);
+
+
+  useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
 
