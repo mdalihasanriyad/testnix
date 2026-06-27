@@ -20,7 +20,6 @@ function buildShareUrl(mbps: number) {
   return url.toString();
 }
 
-
 export function SpeedTest() {
   const search = useSearch({ from: "/" });
   const [phase, setPhase] = useState<Phase>("idle");
