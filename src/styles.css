@@ -140,5 +140,33 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family:
+      ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter,
+      "Helvetica Neue", Arial, sans-serif;
   }
 }
+
+@utility speed-number {
+  font-size: clamp(6rem, 22vw, 16rem);
+  font-weight: 200;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: #0a0a0a;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
