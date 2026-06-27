@@ -33,7 +33,6 @@ export function SpeedTest() {
   const [copied, setCopied] = useState(false);
   const startedRef = useRef(false);
 
-
   const measurePing = useCallback(async (setter: (n: number) => void) => {
     const samples: number[] = [];
     for (let i = 0; i < 5; i++) {
