@@ -1,3 +1,4 @@
+import { useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Phase = "idle" | "ping" | "download" | "upload" | "done";
@@ -11,6 +12,14 @@ function formatSpeed(mbps: number) {
   if (mbps >= 10) return mbps.toFixed(1);
   return mbps.toFixed(2);
 }
+
+function buildShareUrl(mbps: number) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("speed", mbps.toFixed(2));
+  url.searchParams.set("shared", "1");
+  return url.toString();
+}
+
 
 export function SpeedTest() {
   const [phase, setPhase] = useState<Phase>("idle");
