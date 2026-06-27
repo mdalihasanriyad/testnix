@@ -169,8 +169,18 @@ export function SpeedTest() {
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
+
+    const sharedSpeed = typeof search.speed === "string" ? parseFloat(search.speed) : null;
+    if (sharedSpeed && !Number.isNaN(sharedSpeed)) {
+      setFinal(sharedSpeed);
+      setPhase("done");
+      setDisplayed(sharedSpeed);
+      return;
+    }
+
     void runTest();
-  }, [runTest]);
+  }, [runTest, search]);
+
 
   // Smoothly animate the displayed number
   const [animated, setAnimated] = useState(0);
