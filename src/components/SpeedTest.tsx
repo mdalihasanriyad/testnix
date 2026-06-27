@@ -4,7 +4,7 @@ type Phase = "idle" | "ping" | "download" | "upload" | "done";
 
 const TEST_DURATION_MS = 12_000;
 const PARALLEL_STREAMS = 4;
-const CHUNK_BYTES = 10 * 1024 * 1024; // 10MB per request
+const CHUNK_BYTES = 10 * 1024 * 1024;
 
 function formatSpeed(mbps: number) {
   if (mbps >= 100) return mbps.toFixed(0);
@@ -16,12 +16,14 @@ export function SpeedTest() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [displayed, setDisplayed] = useState(0);
   const [final, setFinal] = useState<number | null>(null);
-  const [ping, setPing] = useState<number | null>(null);
+  const [pingUnloaded, setPingUnloaded] = useState<number | null>(null);
+  const [pingLoaded, setPingLoaded] = useState<number | null>(null);
   const [upload, setUpload] = useState<number | null>(null);
-  const [showMore, setShowMore] = useState(false);
+  const [downloadedMB, setDownloadedMB] = useState(0);
+  const [uploadedMB, setUploadedMB] = useState(0);
   const startedRef = useRef(false);
 
-  const measurePing = useCallback(async () => {
+  const measurePing = useCallback(async (setter: (n: number) => void) => {
     const samples: number[] = [];
     for (let i = 0; i < 5; i++) {
       const t = performance.now();
@@ -34,7 +36,7 @@ export function SpeedTest() {
     }
     if (samples.length) {
       samples.sort((a, b) => a - b);
-      setPing(Math.round(samples[Math.floor(samples.length / 2)]));
+      setter(Math.round(samples[Math.floor(samples.length / 2)]));
     }
   }, []);
 
@@ -50,6 +52,7 @@ export function SpeedTest() {
       if (elapsed > 0) {
         const mbps = (totalBytes * 8) / 1_000_000 / elapsed;
         setDisplayed(mbps);
+        setDownloadedMB(totalBytes / (1024 * 1024));
       }
     };
     const interval = setInterval(tick, 200);
@@ -73,14 +76,12 @@ export function SpeedTest() {
             if (value) totalBytes += value.byteLength;
           }
         } catch {
-          // network/abort errors ignored; loop ends when stopped
           break;
         }
       }
     };
 
     const workers = Array.from({ length: PARALLEL_STREAMS }, () => stream());
-
     await new Promise((r) => setTimeout(r, TEST_DURATION_MS));
     stopped = true;
     controller.abort();
@@ -91,11 +92,12 @@ export function SpeedTest() {
     const finalMbps = (totalBytes * 8) / 1_000_000 / Math.max(elapsed, 0.001);
     setDisplayed(finalMbps);
     setFinal(finalMbps);
+    setDownloadedMB(totalBytes / (1024 * 1024));
     return finalMbps;
   }, []);
 
   const runUpload = useCallback(async () => {
-    const payload = new Uint8Array(2 * 1024 * 1024); // 2MB
+    const payload = new Uint8Array(2 * 1024 * 1024);
     crypto.getRandomValues(payload);
     const DURATION = 5_000;
     const start = performance.now();
@@ -111,6 +113,7 @@ export function SpeedTest() {
             cache: "no-store",
           });
           totalBytes += payload.byteLength;
+          setUploadedMB(totalBytes / (1024 * 1024));
         } catch {
           break;
         }
@@ -125,27 +128,32 @@ export function SpeedTest() {
     const elapsed = (performance.now() - start) / 1000;
     const mbps = (totalBytes * 8) / 1_000_000 / Math.max(elapsed, 0.001);
     setUpload(mbps);
+    setUploadedMB(totalBytes / (1024 * 1024));
   }, []);
 
   const runTest = useCallback(async () => {
     setFinal(null);
-    setPing(null);
+    setPingUnloaded(null);
+    setPingLoaded(null);
     setUpload(null);
     setDisplayed(0);
+    setDownloadedMB(0);
+    setUploadedMB(0);
 
     setPhase("ping");
-    await measurePing();
+    await measurePing(setPingUnloaded);
 
     setPhase("download");
     await runDownload();
 
     setPhase("upload");
+    // measure loaded latency in parallel-ish before upload finishes; simple sequential is fine
+    await measurePing(setPingLoaded);
     await runUpload();
 
     setPhase("done");
   }, [measurePing, runDownload, runUpload]);
 
-  // Auto-start on mount
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
@@ -168,30 +176,25 @@ export function SpeedTest() {
     return () => cancelAnimationFrame(raf);
   }, [displayed]);
 
-  const status =
-    phase === "ping"
-      ? "Measuring latency…"
-      : phase === "download"
-        ? final === null
-          ? displayed > 0
-            ? "Testing your download speed…"
-            : "Connecting…"
-          : "Almost done…"
+  const isRunning = phase !== "done" && phase !== "idle";
+  const heading =
+    phase === "done"
+      ? "Your Internet speed is"
+      : phase === "ping"
+        ? "Checking latency…"
         : phase === "upload"
           ? "Measuring upload…"
-          : phase === "done"
-            ? `Your download speed is ${formatSpeed(final ?? 0)} Mbps`
-            : "Starting…";
+          : "Your Internet speed is";
 
   const shownNumber = phase === "done" ? (final ?? 0) : animated;
 
   return (
-    <section className="flex w-full max-w-3xl flex-col items-center gap-8 px-6 text-center">
-      <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
-        Your download speed
-      </p>
+    <section className="flex w-full max-w-5xl flex-col items-center px-6 text-center">
+      <h2 className="mb-6 text-2xl font-bold text-neutral-900 md:text-4xl">
+        {heading}
+      </h2>
 
-      <div className="flex items-baseline justify-center gap-3">
+      <div className="flex items-start justify-center gap-4 md:gap-6">
         <span
           className="speed-number tabular-nums"
           aria-live="polite"
@@ -199,61 +202,75 @@ export function SpeedTest() {
         >
           {formatSpeed(shownNumber)}
         </span>
-        <span className="text-2xl font-light text-neutral-400 md:text-3xl">Mbps</span>
+        <div className="flex flex-col items-start pt-4 md:pt-8">
+          <span className="text-3xl font-bold text-neutral-900 md:text-6xl">
+            Mbps
+          </span>
+          {isRunning && (
+            <span className="mt-4 inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--testnix-red)]">
+              <span className="flex gap-[3px]">
+                <span className="h-3 w-[3px] bg-neutral-700" />
+                <span className="h-3 w-[3px] bg-neutral-700" />
+              </span>
+            </span>
+          )}
+        </div>
       </div>
 
-      <p
-        className={`min-h-6 text-base text-neutral-600 transition-opacity duration-300 md:text-lg ${
-          phase === "done" ? "opacity-100" : "opacity-80"
-        }`}
-      >
-        {status}
-      </p>
+      <div className="mt-12 grid w-full max-w-3xl grid-cols-1 gap-10 border-t border-neutral-200 pt-8 md:grid-cols-2 md:gap-16">
+        <div className="text-left">
+          <h3 className="text-lg font-bold text-neutral-900">Latency</h3>
+          <div className="mt-3 grid grid-cols-2 gap-6 border-b border-neutral-200 pb-3">
+            <div>
+              <p className="text-sm text-neutral-500">Unloaded</p>
+            </div>
+            <div>
+              <p className="text-sm text-neutral-500">Loaded</p>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-6">
+            <p className="text-3xl font-bold tabular-nums text-neutral-900">
+              {pingUnloaded ?? "—"}
+              <span className="ml-1 align-baseline text-sm font-normal text-neutral-500">ms</span>
+            </p>
+            <p className="text-3xl font-bold tabular-nums text-neutral-900">
+              {pingLoaded ?? "—"}
+              <span className="ml-1 align-baseline text-sm font-normal text-neutral-500">ms</span>
+            </p>
+          </div>
+        </div>
 
-      <div className="flex flex-col items-center gap-4">
+        <div className="text-left">
+          <h3 className={`text-lg font-bold ${upload !== null || phase === "upload" ? "text-neutral-900" : "text-neutral-300"}`}>
+            Upload
+          </h3>
+          <div className="mt-3 border-b border-neutral-200 pb-3">
+            <p className={`text-sm ${upload !== null || phase === "upload" ? "text-neutral-500" : "text-neutral-300"}`}>Speed</p>
+          </div>
+          <div className="mt-3">
+            <p className={`text-3xl font-bold tabular-nums ${upload !== null ? "text-neutral-900" : "text-neutral-300"}`}>
+              {upload !== null ? formatSpeed(upload) : "—"}
+              <span className="ml-1 align-baseline text-sm font-normal">Mbps</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 flex w-full max-w-3xl items-center justify-between rounded-md border border-neutral-200 px-4 py-3 text-sm text-neutral-500">
         <button
           type="button"
-          onClick={() => setShowMore((s) => !s)}
-          className="rounded-full border border-neutral-300 px-5 py-2 text-sm font-medium text-neutral-900 transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white"
+          onClick={() => phase === "done" && void runTest()}
+          className="inline-flex items-center gap-2 transition hover:text-neutral-900"
+          disabled={isRunning}
         >
-          {showMore ? "Hide details" : "Show more info"}
+          <span aria-hidden>⚙</span> {phase === "done" ? "Test again" : "Settings"}
         </button>
-
-        {showMore && (
-          <dl className="grid w-full grid-cols-3 gap-6 pt-2 text-left animate-fade-in">
-            <div>
-              <dt className="text-xs uppercase tracking-widest text-neutral-500">Ping</dt>
-              <dd className="mt-1 text-2xl font-semibold tabular-nums">
-                {ping !== null ? `${ping}` : "—"}
-                <span className="ml-1 text-sm font-normal text-neutral-400">ms</span>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-widest text-neutral-500">Download</dt>
-              <dd className="mt-1 text-2xl font-semibold tabular-nums">
-                {final !== null ? formatSpeed(final) : formatSpeed(animated)}
-                <span className="ml-1 text-sm font-normal text-neutral-400">Mbps</span>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-widest text-neutral-500">Upload</dt>
-              <dd className="mt-1 text-2xl font-semibold tabular-nums">
-                {upload !== null ? formatSpeed(upload) : "—"}
-                <span className="ml-1 text-sm font-normal text-neutral-400">Mbps</span>
-              </dd>
-            </div>
-          </dl>
-        )}
-
-        {phase === "done" && (
-          <button
-            type="button"
-            onClick={() => void runTest()}
-            className="mt-2 rounded-full bg-neutral-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-neutral-700"
-          >
-            Test again
-          </button>
-        )}
+        <span className="tabular-nums">
+          {downloadedMB > 0 ? `${downloadedMB.toFixed(0)}MB ↓` : ""}
+        </span>
+        <span className="tabular-nums">
+          {uploadedMB > 0 ? `${uploadedMB.toFixed(0)}MB ↑` : ""}
+        </span>
       </div>
     </section>
   );

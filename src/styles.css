@@ -147,13 +147,18 @@
 }
 
 @utility speed-number {
-  font-size: clamp(6rem, 22vw, 16rem);
-  font-weight: 200;
-  line-height: 1;
-  letter-spacing: -0.04em;
+  font-size: clamp(7rem, 26vw, 18rem);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
   color: #0a0a0a;
   font-variant-numeric: tabular-nums;
 }
+
+:root {
+  --testnix-red: #e60815;
+}
+
 
 @keyframes fade-in {
   0% {
