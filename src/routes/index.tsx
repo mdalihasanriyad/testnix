@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SpeedTest } from "../components/SpeedTest";
+import logo from "../assets/testnix-logo.png";
 
 const TITLE = "Testnix.net - Free Internet Speed Test Tool";
 const DESCRIPTION =
@@ -43,29 +44,27 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <main className="flex min-h-screen flex-col bg-white text-neutral-900">
-      <header className="flex items-center justify-between px-6 py-5 md:px-10">
-        <a href="/" className="text-lg font-bold tracking-tight">
-          Testnix<span className="text-neutral-400">.net</span>
-        </a>
-        <nav aria-label="Primary" className="text-sm text-neutral-500">
-          <span className="hidden sm:inline">Test Your Internet Speed Instantly</span>
+      <header className="flex items-center justify-end px-6 py-5 text-sm text-neutral-600 md:px-10">
+        <nav aria-label="Primary" className="flex items-center gap-6">
+          <span>English (US)</span>
+          <a href="/privacy" className="hover:text-neutral-900">Privacy</a>
         </nav>
       </header>
 
       <section className="flex flex-1 flex-col items-center justify-center pb-16">
-        <h1 className="sr-only">Testnix.net — Free Internet Speed Test</h1>
+        <div className="mb-4 flex flex-col items-center">
+          <img
+            src={logo}
+            alt="Testnix speedometer logo"
+            width={96}
+            height={96}
+            className="h-20 w-20 md:h-24 md:w-24"
+          />
+          <h1 className="mt-1 text-3xl font-extrabold tracking-tight md:text-5xl">
+            TESTNIX
+          </h1>
+        </div>
         <SpeedTest />
-      </section>
-
-      <section className="mx-auto max-w-3xl px-6 pb-16 text-center text-sm text-neutral-500">
-        <h2 className="mb-2 text-base font-semibold text-neutral-700">
-          About this speed test
-        </h2>
-        <p>
-          Testnix measures your real-world internet performance by downloading data
-          from our servers using multiple parallel connections, then reports
-          download, upload and latency in seconds. No login. No tracking. Just speed.
-        </p>
       </section>
 
       <footer className="border-t border-neutral-200 px-6 py-6 text-center text-xs text-neutral-400">
