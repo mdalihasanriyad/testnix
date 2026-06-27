@@ -1,3 +1,4 @@
+import { useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Phase = "idle" | "ping" | "download" | "upload" | "done";
@@ -12,7 +13,15 @@ function formatSpeed(mbps: number) {
   return mbps.toFixed(2);
 }
 
+function buildShareUrl(mbps: number) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("speed", mbps.toFixed(2));
+  url.searchParams.set("shared", "1");
+  return url.toString();
+}
+
 export function SpeedTest() {
+  const search = useSearch({ from: "/" });
   const [phase, setPhase] = useState<Phase>("idle");
   const [displayed, setDisplayed] = useState(0);
   const [final, setFinal] = useState<number | null>(null);
@@ -21,6 +30,7 @@ export function SpeedTest() {
   const [upload, setUpload] = useState<number | null>(null);
   const [downloadedMB, setDownloadedMB] = useState(0);
   const [uploadedMB, setUploadedMB] = useState(0);
+  const [copied, setCopied] = useState(false);
   const startedRef = useRef(false);
 
   const measurePing = useCallback(async (setter: (n: number) => void) => {
@@ -155,10 +165,30 @@ export function SpeedTest() {
   }, [measurePing, runDownload, runUpload]);
 
   useEffect(() => {
+    if (phase === "done" && final !== null && typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("speed", final.toFixed(2));
+      url.searchParams.set("shared", "1");
+      window.history.replaceState({}, "", url);
+    }
+  }, [phase, final]);
+
+
+  useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
+
+    const sharedSpeed = typeof search.speed === "string" ? parseFloat(search.speed) : null;
+    if (sharedSpeed && !Number.isNaN(sharedSpeed)) {
+      setFinal(sharedSpeed);
+      setPhase("done");
+      setDisplayed(sharedSpeed);
+      return;
+    }
+
     void runTest();
-  }, [runTest]);
+  }, [runTest, search]);
+
 
   // Smoothly animate the displayed number
   const [animated, setAnimated] = useState(0);
@@ -188,6 +218,20 @@ export function SpeedTest() {
 
   const shownNumber = phase === "done" ? (final ?? 0) : animated;
 
+  const handleShare = useCallback(async () => {
+    if (final === null) return;
+    const url = buildShareUrl(final);
+    const text = `Testnix.net - My internet speed is ${formatSpeed(final)} Mbps. Check your speed at ${url}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback: do nothing if clipboard is unavailable
+    }
+  }, [final]);
+
+
   return (
     <section className="flex w-full max-w-5xl flex-col items-center px-6 text-center">
       <h2 className="mb-6 text-2xl font-bold text-neutral-900 md:text-4xl">
@@ -215,28 +259,72 @@ export function SpeedTest() {
             </span>
           )}
           {phase === "done" && (
-            <button
-              type="button"
-              onClick={() => void runTest()}
-              aria-label="Restart speed test"
-              className="mt-4 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-[var(--testnix-red)] bg-white text-[var(--testnix-red)] shadow-sm transition hover:scale-105 hover:bg-neutral-50 active:scale-95"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void runTest()}
+                aria-label="Restart speed test"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-[var(--testnix-red)] bg-white text-[var(--testnix-red)] shadow-sm transition hover:scale-105 hover:bg-neutral-50 active:scale-95"
               >
-                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-                <path d="M21 3v5h-5" />
-              </svg>
-            </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+                  <path d="M21 3v5h-5" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleShare()}
+                aria-label="Share speed test result"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-neutral-900 bg-neutral-900 text-white shadow-sm transition hover:scale-105 hover:bg-neutral-800 active:scale-95"
+              >
+                {copied ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                )}
+              </button>
+            </div>
           )}
         </div>
       </div>
