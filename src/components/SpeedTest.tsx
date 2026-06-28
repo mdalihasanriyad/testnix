@@ -238,8 +238,8 @@ export function SpeedTest() {
   const showReload = phase === "done" && !extrasRunning;
 
   return (
-    <section className="flex w-full max-w-5xl flex-col items-center px-6 text-center">
-      <h2 className="mb-6 text-2xl font-bold text-neutral-900 md:text-4xl">
+    <section className="flex w-full max-w-5xl flex-col items-center px-4 text-center sm:px-6">
+      <h2 className="fast-heading mb-2 text-[28px] text-neutral-900 sm:mb-4 sm:text-4xl md:text-[44px]">
         {heading}
       </h2>
 
