@@ -147,12 +147,19 @@
 }
 
 @utility speed-number {
-  font-size: clamp(7rem, 26vw, 18rem);
+  font-size: clamp(8rem, 32vw, 20rem);
   font-weight: 700;
-  line-height: 0.9;
-  letter-spacing: -0.05em;
+  line-height: 0.85;
+  letter-spacing: -0.055em;
   color: #0a0a0a;
   font-variant-numeric: tabular-nums;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+@utility fast-heading {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 :root {

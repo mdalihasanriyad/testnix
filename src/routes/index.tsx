@@ -51,16 +51,17 @@ function Index() {
         </nav>
       </header>
 
-      <section className="flex flex-1 flex-col items-center justify-center pb-16">
-        <div className="mb-4 flex flex-col items-center">
+      <section className="flex flex-1 flex-col items-center justify-start px-4 pb-16 pt-2 sm:justify-center sm:pt-0">
+        <div className="mb-3 flex flex-col items-center sm:mb-6">
           <img
             src={logo}
             alt="Testnix speedometer logo"
-            width={96}
-            height={96}
-            className="h-20 w-20 md:h-24 md:w-24"
+            width={112}
+            height={112}
+            className="h-16 w-16 sm:h-24 sm:w-24 md:h-28 md:w-28"
+            loading="eager"
           />
-          <h1 className="mt-1 text-3xl font-extrabold tracking-tight md:text-5xl">
+          <h1 className="fast-heading mt-0 text-2xl tracking-tight sm:text-4xl md:text-5xl">
             TESTNIX
           </h1>
         </div>

@@ -238,12 +238,12 @@ export function SpeedTest() {
   const showReload = phase === "done" && !extrasRunning;
 
   return (
-    <section className="flex w-full max-w-5xl flex-col items-center px-6 text-center">
-      <h2 className="mb-6 text-2xl font-bold text-neutral-900 md:text-4xl">
+    <section className="flex w-full max-w-5xl flex-col items-center px-4 text-center sm:px-6">
+      <h2 className="fast-heading mb-2 text-[28px] text-neutral-900 sm:mb-4 sm:text-4xl md:text-[44px]">
         {heading}
       </h2>
 
-      <div className="flex items-start justify-center gap-4 md:gap-6">
+      <div className="flex items-start justify-center gap-2 sm:gap-4 md:gap-6">
         <span
           className="speed-number tabular-nums"
           aria-live="polite"
@@ -251,8 +251,8 @@ export function SpeedTest() {
         >
           {formatSpeed(shownNumber)}
         </span>
-        <div className="flex flex-col items-start pt-4 md:pt-8">
-          <span className="text-3xl font-bold text-neutral-900 md:text-6xl">
+        <div className="flex flex-col items-start pt-3 sm:pt-5 md:pt-8">
+          <span className="fast-heading text-4xl text-neutral-900 sm:text-5xl md:text-7xl">
             Mbps
           </span>
           {isDownloading && (
