@@ -31,6 +31,8 @@ export function SpeedTest() {
   const [downloadedMB, setDownloadedMB] = useState(0);
   const [uploadedMB, setUploadedMB] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [showMore, setShowMore] = useState(false);
+  const [extrasRunning, setExtrasRunning] = useState(false);
   const startedRef = useRef(false);
 
   const measurePing = useCallback(async (setter: (n: number) => void) => {
@@ -149,6 +151,7 @@ export function SpeedTest() {
     setDisplayed(0);
     setDownloadedMB(0);
     setUploadedMB(0);
+    setShowMore(false);
 
     setPhase("ping");
     await measurePing(setPingUnloaded);
@@ -156,13 +159,18 @@ export function SpeedTest() {
     setPhase("download");
     await runDownload();
 
+    setPhase("done");
+  }, [measurePing, runDownload]);
+
+  const runExtras = useCallback(async () => {
+    setShowMore(true);
+    setExtrasRunning(true);
     setPhase("upload");
-    // measure loaded latency in parallel-ish before upload finishes; simple sequential is fine
     await measurePing(setPingLoaded);
     await runUpload();
-
     setPhase("done");
-  }, [measurePing, runDownload, runUpload]);
+    setExtrasRunning(false);
+  }, [measurePing, runUpload]);
 
   useEffect(() => {
     if (phase === "done" && final !== null && typeof window !== "undefined") {
@@ -172,7 +180,6 @@ export function SpeedTest() {
       window.history.replaceState({}, "", url);
     }
   }, [phase, final]);
-
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -188,7 +195,6 @@ export function SpeedTest() {
 
     void runTest();
   }, [runTest, search]);
-
 
   // Smoothly animate the displayed number
   const [animated, setAnimated] = useState(0);
@@ -206,15 +212,13 @@ export function SpeedTest() {
     return () => cancelAnimationFrame(raf);
   }, [displayed]);
 
-  const isRunning = phase !== "done" && phase !== "idle";
+  const isDownloading = phase === "ping" || phase === "download";
   const heading =
-    phase === "done"
+    phase === "ping" || phase === "download"
       ? "Your Internet speed is"
-      : phase === "ping"
-        ? "Checking latency…"
-        : phase === "upload"
-          ? "Measuring upload…"
-          : "Your Internet speed is";
+      : phase === "upload"
+        ? "Your Internet speed is"
+        : "Your Internet speed is";
 
   const shownNumber = phase === "done" ? (final ?? 0) : animated;
 
@@ -227,10 +231,11 @@ export function SpeedTest() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback: do nothing if clipboard is unavailable
+      // ignore
     }
   }, [final]);
 
+  const showReload = phase === "done" && !extrasRunning;
 
   return (
     <section className="flex w-full max-w-5xl flex-col items-center px-6 text-center">
@@ -250,34 +255,23 @@ export function SpeedTest() {
           <span className="text-3xl font-bold text-neutral-900 md:text-6xl">
             Mbps
           </span>
-          {isRunning && (
-            <span className="mt-4 inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--testnix-red)]">
-              <span className="flex gap-[3px]">
-                <span className="h-3 w-[3px] bg-neutral-700" />
-                <span className="h-3 w-[3px] bg-neutral-700" />
+          {isDownloading && (
+            <span className="mt-4 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-[var(--testnix-red)]">
+              <span className="flex gap-[4px]">
+                <span className="h-4 w-[4px] bg-neutral-500" />
+                <span className="h-4 w-[4px] bg-neutral-500" />
               </span>
             </span>
           )}
-          {phase === "done" && (
+          {showReload && (
             <div className="mt-4 flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => void runTest()}
                 aria-label="Restart speed test"
-                className="inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-[var(--testnix-red)] bg-white text-[var(--testnix-red)] shadow-sm transition hover:scale-105 hover:bg-neutral-50 active:scale-95"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-green-500 bg-white text-neutral-900 shadow-sm transition hover:scale-105 hover:bg-neutral-50 active:scale-95"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
                   <path d="M21 3v5h-5" />
                 </svg>
@@ -289,33 +283,11 @@ export function SpeedTest() {
                 className="inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-neutral-900 bg-neutral-900 text-white shadow-sm transition hover:scale-105 hover:bg-neutral-800 active:scale-95"
               >
                 {copied ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="22"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M20 6 9 17l-5-5" />
                   </svg>
                 ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="22"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <circle cx="18" cy="5" r="3" />
                     <circle cx="6" cy="12" r="3" />
                     <circle cx="18" cy="19" r="3" />
@@ -326,64 +298,86 @@ export function SpeedTest() {
               </button>
             </div>
           )}
+          {phase === "upload" && (
+            <span className="mt-4 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-[var(--testnix-red)]">
+              <span className="flex gap-[4px]">
+                <span className="h-4 w-[4px] bg-neutral-500" />
+                <span className="h-4 w-[4px] bg-neutral-500" />
+              </span>
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="mt-12 grid w-full max-w-3xl grid-cols-1 gap-10 border-t border-neutral-200 pt-8 md:grid-cols-2 md:gap-16">
-        <div className="text-left">
-          <h3 className="text-lg font-bold text-neutral-900">Latency</h3>
-          <div className="mt-3 grid grid-cols-2 gap-6 border-b border-neutral-200 pb-3">
-            <div>
-              <p className="text-sm text-neutral-500">Unloaded</p>
+      {/* Show more info button (fast.com style) */}
+      {phase === "done" && !showMore && (
+        <div className="mt-10">
+          <button
+            type="button"
+            onClick={() => void runExtras()}
+            className="rounded-md border border-neutral-300 bg-white px-8 py-3 text-base text-neutral-600 transition hover:border-neutral-900 hover:text-neutral-900"
+          >
+            Show more info
+          </button>
+        </div>
+      )}
+
+      {/* Latency + Upload panels (revealed after Show more info) */}
+      {showMore && (
+        <>
+          <div className="mt-12 grid w-full max-w-3xl grid-cols-1 gap-10 pt-8 md:grid-cols-2 md:gap-16 animate-fade-in">
+            <div className="text-left">
+              <h3 className="text-lg font-bold text-neutral-900">Latency</h3>
+              <div className="mt-3 grid grid-cols-2 gap-6 border-b border-neutral-200 pb-3">
+                <p className="text-sm text-neutral-500">Unloaded</p>
+                <p className="text-sm text-neutral-500">Loaded</p>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-6">
+                <p className="text-3xl font-bold tabular-nums text-neutral-900">
+                  {pingUnloaded ?? "—"}
+                  <span className="ml-1 align-baseline text-sm font-normal text-neutral-500">ms</span>
+                </p>
+                <p className="text-3xl font-bold tabular-nums text-neutral-900">
+                  {pingLoaded ?? "—"}
+                  <span className="ml-1 align-baseline text-sm font-normal text-neutral-500">ms</span>
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-neutral-500">Loaded</p>
+
+            <div className="text-left">
+              <h3 className={`text-lg font-bold ${upload !== null || phase === "upload" ? "text-neutral-900" : "text-neutral-300"}`}>
+                Upload
+              </h3>
+              <div className="mt-3 border-b border-neutral-200 pb-3">
+                <p className={`text-sm ${upload !== null || phase === "upload" ? "text-neutral-500" : "text-neutral-300"}`}>Speed</p>
+              </div>
+              <div className="mt-3">
+                <p className={`text-3xl font-bold tabular-nums ${upload !== null ? "text-neutral-900" : "text-neutral-300"}`}>
+                  {upload !== null ? formatSpeed(upload) : "—"}
+                  <span className="ml-1 align-baseline text-sm font-normal">Mbps</span>
+                </p>
+              </div>
             </div>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-6">
-            <p className="text-3xl font-bold tabular-nums text-neutral-900">
-              {pingUnloaded ?? "—"}
-              <span className="ml-1 align-baseline text-sm font-normal text-neutral-500">ms</span>
-            </p>
-            <p className="text-3xl font-bold tabular-nums text-neutral-900">
-              {pingLoaded ?? "—"}
-              <span className="ml-1 align-baseline text-sm font-normal text-neutral-500">ms</span>
-            </p>
-          </div>
-        </div>
 
-        <div className="text-left">
-          <h3 className={`text-lg font-bold ${upload !== null || phase === "upload" ? "text-neutral-900" : "text-neutral-300"}`}>
-            Upload
-          </h3>
-          <div className="mt-3 border-b border-neutral-200 pb-3">
-            <p className={`text-sm ${upload !== null || phase === "upload" ? "text-neutral-500" : "text-neutral-300"}`}>Speed</p>
+          <div className="mt-6 flex w-full max-w-3xl items-center justify-between rounded-md border border-neutral-200 px-4 py-3 text-sm text-neutral-500 animate-fade-in">
+            <button
+              type="button"
+              onClick={() => phase === "done" && void runTest()}
+              className="inline-flex items-center gap-2 transition hover:text-neutral-900"
+              disabled={phase !== "done"}
+            >
+              <span aria-hidden>⚙</span> Settings
+            </button>
+            <span className="tabular-nums">
+              {downloadedMB > 0 ? `${downloadedMB.toFixed(0)}MB ↓` : ""}
+            </span>
+            <span className="tabular-nums">
+              {uploadedMB > 0 ? `${uploadedMB.toFixed(0)}MB ↑` : ""}
+            </span>
           </div>
-          <div className="mt-3">
-            <p className={`text-3xl font-bold tabular-nums ${upload !== null ? "text-neutral-900" : "text-neutral-300"}`}>
-              {upload !== null ? formatSpeed(upload) : "—"}
-              <span className="ml-1 align-baseline text-sm font-normal">Mbps</span>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 flex w-full max-w-3xl items-center justify-between rounded-md border border-neutral-200 px-4 py-3 text-sm text-neutral-500">
-        <button
-          type="button"
-          onClick={() => phase === "done" && void runTest()}
-          className="inline-flex items-center gap-2 transition hover:text-neutral-900"
-          disabled={isRunning}
-        >
-          <span aria-hidden>⚙</span> {phase === "done" ? "Test again" : "Settings"}
-        </button>
-        <span className="tabular-nums">
-          {downloadedMB > 0 ? `${downloadedMB.toFixed(0)}MB ↓` : ""}
-        </span>
-        <span className="tabular-nums">
-          {uploadedMB > 0 ? `${uploadedMB.toFixed(0)}MB ↑` : ""}
-        </span>
-      </div>
+        </>
+      )}
     </section>
   );
 }
