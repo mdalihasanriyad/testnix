@@ -147,19 +147,29 @@
 }
 
 @utility speed-number {
-  font-size: clamp(8rem, 32vw, 20rem);
+  font-size: clamp(7rem, 38vw, 22rem);
   font-weight: 700;
-  line-height: 0.85;
-  letter-spacing: -0.055em;
+  line-height: 0.82;
+  letter-spacing: -0.06em;
   color: #0a0a0a;
   font-variant-numeric: tabular-nums;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+@utility mbps-label {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.25rem, 9.5vw, 5.5rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: #0a0a0a;
 }
 
 @utility fast-heading {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: 700;
   letter-spacing: -0.01em;
+  font-size: clamp(1.5rem, 3.2vw, 2.75rem);
 }
 
 :root {
