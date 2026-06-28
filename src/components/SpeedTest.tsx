@@ -239,7 +239,7 @@ export function SpeedTest() {
 
   return (
     <section className="flex w-full max-w-5xl flex-col items-center px-4 text-center sm:px-6">
-      <h2 className="fast-heading mb-2 text-[28px] text-neutral-900 sm:mb-4 sm:text-4xl md:text-[44px]">
+      <h2 className="fast-heading mb-3 text-neutral-900 sm:mb-5">
         {heading}
       </h2>
 
@@ -251,10 +251,8 @@ export function SpeedTest() {
         >
           {formatSpeed(shownNumber)}
         </span>
-        <div className="flex flex-col items-start pt-3 sm:pt-5 md:pt-8">
-          <span className="fast-heading text-4xl text-neutral-900 sm:text-5xl md:text-7xl">
-            Mbps
-          </span>
+        <div className="flex flex-col items-start pt-[8%] sm:pt-[6%]">
+          <span className="mbps-label">Mbps</span>
           {isDownloading && (
             <span className="mt-4 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-[var(--testnix-red)]">
               <span className="flex gap-[4px]">
