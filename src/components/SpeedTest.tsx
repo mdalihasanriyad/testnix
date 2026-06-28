@@ -243,7 +243,7 @@ export function SpeedTest() {
         {heading}
       </h2>
 
-      <div className="flex items-start justify-center gap-4 md:gap-6">
+      <div className="flex items-start justify-center gap-2 sm:gap-4 md:gap-6">
         <span
           className="speed-number tabular-nums"
           aria-live="polite"
@@ -251,8 +251,8 @@ export function SpeedTest() {
         >
           {formatSpeed(shownNumber)}
         </span>
-        <div className="flex flex-col items-start pt-4 md:pt-8">
-          <span className="text-3xl font-bold text-neutral-900 md:text-6xl">
+        <div className="flex flex-col items-start pt-3 sm:pt-5 md:pt-8">
+          <span className="fast-heading text-4xl text-neutral-900 sm:text-5xl md:text-7xl">
             Mbps
           </span>
           {isDownloading && (
