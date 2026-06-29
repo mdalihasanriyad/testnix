@@ -51,7 +51,7 @@ function Index() {
         </nav>
       </header>
 
-      <section className="flex flex-1 flex-col items-center justify-start px-4 pb-12 pt-4 sm:justify-center sm:pt-0">
+      <section className="flex flex-1 flex-col items-center justify-start px-4 pb-12 pt-4 sm:justify-start sm:pt-8">
         <div className="mb-4 flex flex-col items-center sm:mb-8">
           <img
             src={logo}
