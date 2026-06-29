@@ -239,7 +239,7 @@ export function SpeedTest() {
 
   return (
     <section className="flex w-full max-w-5xl flex-col items-center px-4 text-center sm:px-6">
-      <h2 className="fast-heading mb-3 text-neutral-900 sm:mb-5">
+      <h2 className="fast-heading mb-1 text-neutral-900 sm:mb-2">
         {heading}
       </h2>
 

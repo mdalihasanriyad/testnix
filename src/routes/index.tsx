@@ -52,7 +52,7 @@ function Index() {
       </header>
 
       <section className="flex flex-1 flex-col items-center justify-start px-4 pb-12 pt-4 sm:justify-start sm:pt-8">
-        <div className="mb-4 flex flex-col items-center sm:mb-8">
+        <div className="mb-[clamp(2rem,5vw,4rem)] flex flex-col items-center">
           <img
             src={logo}
             alt="Testnix speedometer logo"
@@ -61,7 +61,7 @@ function Index() {
             className="h-[clamp(72px,11vw,128px)] w-[clamp(72px,11vw,128px)]"
             loading="eager"
           />
-          <h1 className="fast-heading -mt-1 tracking-tight">
+          <h1 className="fast-heading mt-1 tracking-tight">
             TESTNIX
           </h1>
         </div>
