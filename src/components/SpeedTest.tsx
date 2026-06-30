@@ -326,6 +326,33 @@ export function SpeedTest() {
         </div>
       </div>
 
+      {/* Live stats row during active test */}
+      {phase !== "idle" && phase !== "done" && (
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm text-neutral-600 sm:text-base animate-fade-in">
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-neutral-400">Ping</span>
+            <span className={`font-bold tabular-nums ${phase === "ping" ? "text-[var(--testnix-red)]" : "text-neutral-900"}`}>
+              {livePing ?? "—"}
+            </span>
+            <span className="text-xs text-neutral-400">ms</span>
+          </span>
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-neutral-400">Download</span>
+            <span className={`font-bold tabular-nums ${phase === "download" ? "text-[var(--testnix-red)]" : "text-neutral-900"}`}>
+              {phase === "download" ? formatSpeed(animated) : final !== null ? formatSpeed(final) : "—"}
+            </span>
+            <span className="text-xs text-neutral-400">Mbps</span>
+          </span>
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-neutral-400">Upload</span>
+            <span className={`font-bold tabular-nums ${phase === "upload" ? "text-[var(--testnix-red)]" : "text-neutral-900"}`}>
+              {phase === "upload" ? formatSpeed(animated) : upload !== null ? formatSpeed(upload) : "—"}
+            </span>
+            <span className="text-xs text-neutral-400">Mbps</span>
+          </span>
+        </div>
+      )}
+
       {/* Show more info button (fast.com style) */}
       {phase === "done" && !showMore && (
         <div className="mt-10">
