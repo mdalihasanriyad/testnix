@@ -33,6 +33,7 @@ export function SpeedTest() {
   const [copied, setCopied] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [extrasRunning, setExtrasRunning] = useState(false);
+  const [livePing, setLivePing] = useState<number | null>(null);
   const startedRef = useRef(false);
 
   const measurePing = useCallback(async (setter: (n: number) => void) => {
@@ -41,14 +42,18 @@ export function SpeedTest() {
       const t = performance.now();
       try {
         await fetch(`/api/ping?t=${Date.now()}-${i}`, { cache: "no-store" });
-        samples.push(performance.now() - t);
+        const dt = performance.now() - t;
+        samples.push(dt);
+        setLivePing(Math.round(dt));
       } catch {
         // ignore
       }
     }
     if (samples.length) {
-      samples.sort((a, b) => a - b);
-      setter(Math.round(samples[Math.floor(samples.length / 2)]));
+      const sorted = [...samples].sort((a, b) => a - b);
+      const median = Math.round(sorted[Math.floor(sorted.length / 2)]);
+      setter(median);
+      setLivePing(median);
     }
   }, []);
 
@@ -166,6 +171,7 @@ export function SpeedTest() {
     setDownloadedMB(0);
     setUploadedMB(0);
     setShowMore(false);
+    setLivePing(null);
 
     setPhase("ping");
     await measurePing(setPingUnloaded);
@@ -319,6 +325,33 @@ export function SpeedTest() {
           )}
         </div>
       </div>
+
+      {/* Live stats row during active test */}
+      {phase !== "idle" && phase !== "done" && (
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm text-neutral-600 sm:text-base animate-fade-in">
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-neutral-400">Ping</span>
+            <span className={`font-bold tabular-nums ${phase === "ping" ? "text-[var(--testnix-red)]" : "text-neutral-900"}`}>
+              {livePing ?? "—"}
+            </span>
+            <span className="text-xs text-neutral-400">ms</span>
+          </span>
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-neutral-400">Download</span>
+            <span className={`font-bold tabular-nums ${phase === "download" ? "text-[var(--testnix-red)]" : "text-neutral-900"}`}>
+              {phase === "download" ? formatSpeed(animated) : final !== null ? formatSpeed(final) : "—"}
+            </span>
+            <span className="text-xs text-neutral-400">Mbps</span>
+          </span>
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-neutral-400">Upload</span>
+            <span className={`font-bold tabular-nums ${phase === "upload" ? "text-[var(--testnix-red)]" : "text-neutral-900"}`}>
+              {phase === "upload" ? formatSpeed(animated) : upload !== null ? formatSpeed(upload) : "—"}
+            </span>
+            <span className="text-xs text-neutral-400">Mbps</span>
+          </span>
+        </div>
+      )}
 
       {/* Show more info button (fast.com style) */}
       {phase === "done" && !showMore && (
