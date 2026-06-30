@@ -116,6 +116,19 @@ export function SpeedTest() {
     let totalBytes = 0;
     let stopped = false;
 
+    setDisplayed(0);
+
+    const tick = () => {
+      if (stopped) return;
+      const elapsed = (performance.now() - start) / 1000;
+      if (elapsed > 0) {
+        const mbps = (totalBytes * 8) / 1_000_000 / elapsed;
+        setDisplayed(mbps);
+        setUploadedMB(totalBytes / (1024 * 1024));
+      }
+    };
+    const interval = setInterval(tick, 200);
+
     const worker = async () => {
       while (!stopped) {
         try {
@@ -125,7 +138,6 @@ export function SpeedTest() {
             cache: "no-store",
           });
           totalBytes += payload.byteLength;
-          setUploadedMB(totalBytes / (1024 * 1024));
         } catch {
           break;
         }
@@ -135,10 +147,12 @@ export function SpeedTest() {
     const workers = [worker(), worker()];
     await new Promise((r) => setTimeout(r, DURATION));
     stopped = true;
+    clearInterval(interval);
     await Promise.allSettled(workers);
 
     const elapsed = (performance.now() - start) / 1000;
     const mbps = (totalBytes * 8) / 1_000_000 / Math.max(elapsed, 0.001);
+    setDisplayed(mbps);
     setUpload(mbps);
     setUploadedMB(totalBytes / (1024 * 1024));
   }, []);
