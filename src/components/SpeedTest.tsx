@@ -171,6 +171,7 @@ export function SpeedTest() {
     setDownloadedMB(0);
     setUploadedMB(0);
     setShowMore(false);
+    setLivePing(null);
 
     setPhase("ping");
     await measurePing(setPingUnloaded);
