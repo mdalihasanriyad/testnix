@@ -41,14 +41,18 @@ export function SpeedTest() {
       const t = performance.now();
       try {
         await fetch(`/api/ping?t=${Date.now()}-${i}`, { cache: "no-store" });
-        samples.push(performance.now() - t);
+        const dt = performance.now() - t;
+        samples.push(dt);
+        setLivePing(Math.round(dt));
       } catch {
         // ignore
       }
     }
     if (samples.length) {
-      samples.sort((a, b) => a - b);
-      setter(Math.round(samples[Math.floor(samples.length / 2)]));
+      const sorted = [...samples].sort((a, b) => a - b);
+      const median = Math.round(sorted[Math.floor(sorted.length / 2)]);
+      setter(median);
+      setLivePing(median);
     }
   }, []);
 
