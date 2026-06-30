@@ -159,18 +159,17 @@ export function SpeedTest() {
     setPhase("download");
     await runDownload();
 
-    setPhase("done");
-  }, [measurePing, runDownload]);
-
-  const runExtras = useCallback(async () => {
-    setShowMore(true);
-    setExtrasRunning(true);
     setPhase("upload");
     await measurePing(setPingLoaded);
     await runUpload();
+
     setPhase("done");
-    setExtrasRunning(false);
-  }, [measurePing, runUpload]);
+    setShowMore(true);
+  }, [measurePing, runDownload, runUpload]);
+
+  const runExtras = useCallback(async () => {
+    setShowMore(true);
+  }, []);
 
   useEffect(() => {
     if (phase === "done" && final !== null && typeof window !== "undefined") {
