@@ -33,6 +33,7 @@ export function SpeedTest() {
   const [copied, setCopied] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [extrasRunning, setExtrasRunning] = useState(false);
+  const [livePing, setLivePing] = useState<number | null>(null);
   const startedRef = useRef(false);
 
   const measurePing = useCallback(async (setter: (n: number) => void) => {
