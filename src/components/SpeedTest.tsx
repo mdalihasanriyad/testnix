@@ -38,17 +38,30 @@ export function SpeedTest() {
 
   const measurePing = useCallback(async (setter: (n: number) => void) => {
     const samples: number[] = [];
-    for (let i = 0; i < 5; i++) {
-      const t = performance.now();
-      try {
-        await fetch(`/api/ping?t=${Date.now()}-${i}`, { cache: "no-store" });
-        const dt = performance.now() - t;
-        samples.push(dt);
-        setLivePing(Math.round(dt));
-      } catch {
-        // ignore
+    const PROBES_PER_UPDATE = 3;
+    const PING_DURATION_MS = 2_500;
+    const startTime = performance.now();
+    let probeIdx = 0;
+
+    while (performance.now() - startTime < PING_DURATION_MS) {
+      const batch: number[] = [];
+      for (let j = 0; j < PROBES_PER_UPDATE; j++) {
+        const t = performance.now();
+        try {
+          await fetch(`/api/ping?t=${Date.now()}-${probeIdx++}`, { cache: "no-store" });
+          const dt = performance.now() - t;
+          batch.push(dt);
+          samples.push(dt);
+        } catch {
+          // ignore failed probes
+        }
+      }
+      if (batch.length) {
+        const avg = Math.round(batch.reduce((a, b) => a + b, 0) / batch.length);
+        setLivePing(avg);
       }
     }
+
     if (samples.length) {
       const sorted = [...samples].sort((a, b) => a - b);
       const median = Math.round(sorted[Math.floor(sorted.length / 2)]);
