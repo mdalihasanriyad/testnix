@@ -77,17 +77,28 @@ export function SpeedTest() {
     let totalBytes = 0;
     const startTime = performance.now();
     let stopped = false;
+    const samples: number[] = [];
+    let lastBytes = 0;
+    let lastTime = startTime;
 
     const tick = () => {
       if (stopped) return;
-      const elapsed = (performance.now() - startTime) / 1000;
-      if (elapsed > 0) {
-        const mbps = (totalBytes * 8) / 1_000_000 / elapsed;
-        setDisplayed(mbps);
-        setDownloadedMB(totalBytes / (1024 * 1024));
+      const now = performance.now();
+      const deltaBytes = totalBytes - lastBytes;
+      const deltaTime = (now - lastTime) / 1000;
+      if (deltaTime > 0) {
+        const instantMbps = (deltaBytes * 8) / 1_000_000 / deltaTime;
+        samples.push(instantMbps);
+        if (samples.length > 5) samples.shift();
+        const avg = samples.reduce((a, b) => a + b, 0) / samples.length;
+        setDisplayed(avg);
       }
+      setDownloadedMB(totalBytes / (1024 * 1024));
+      lastBytes = totalBytes;
+      lastTime = now;
     };
     const interval = setInterval(tick, 200);
+
 
     const stream = async () => {
       while (!stopped) {
