@@ -34,7 +34,9 @@ export function SpeedTest() {
   const [showMore, setShowMore] = useState(false);
   const [extrasRunning, setExtrasRunning] = useState(false);
   const [livePing, setLivePing] = useState<number | null>(null);
+  const [elapsed, setElapsed] = useState(0);
   const startedRef = useRef(false);
+
 
   const measurePing = useCallback(async (setter: (n: number) => void) => {
     const samples: number[] = [];
@@ -228,6 +230,19 @@ export function SpeedTest() {
     void runTest();
   }, [runTest, search]);
 
+  // Track elapsed seconds during active test phases
+  useEffect(() => {
+    if (phase === "idle" || phase === "done") {
+      setElapsed(0);
+      return;
+    }
+    const start = performance.now();
+    const interval = setInterval(() => {
+      setElapsed((performance.now() - start) / 1000);
+    }, 200);
+    return () => clearInterval(interval);
+  }, [phase]);
+
   // Smoothly animate the displayed number
   const [animated, setAnimated] = useState(0);
   useEffect(() => {
@@ -243,6 +258,7 @@ export function SpeedTest() {
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, [displayed]);
+
 
   const isDownloading = phase === "ping" || phase === "download";
   const heading =
@@ -343,6 +359,13 @@ export function SpeedTest() {
       {phase !== "idle" && phase !== "done" && (
         <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm text-neutral-600 sm:text-base animate-fade-in">
           <span className="flex items-baseline gap-1.5">
+            <span className="text-neutral-400">Time</span>
+            <span className="font-bold tabular-nums text-neutral-900">
+              {elapsed.toFixed(1)}
+            </span>
+            <span className="text-xs text-neutral-400">s</span>
+          </span>
+          <span className="flex items-baseline gap-1.5">
             <span className="text-neutral-400">Ping</span>
             <span className={`font-bold tabular-nums ${phase === "ping" ? "text-[var(--testnix-red)]" : "text-neutral-900"}`}>
               {livePing ?? "—"}
@@ -365,6 +388,7 @@ export function SpeedTest() {
           </span>
         </div>
       )}
+
 
       {/* Show more info button (fast.com style) */}
       {phase === "done" && !showMore && (
