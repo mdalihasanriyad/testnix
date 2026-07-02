@@ -230,6 +230,19 @@ export function SpeedTest() {
     void runTest();
   }, [runTest, search]);
 
+  // Track elapsed seconds during active test phases
+  useEffect(() => {
+    if (phase === "idle" || phase === "done") {
+      setElapsed(0);
+      return;
+    }
+    const start = performance.now();
+    const interval = setInterval(() => {
+      setElapsed((performance.now() - start) / 1000);
+    }, 200);
+    return () => clearInterval(interval);
+  }, [phase]);
+
   // Smoothly animate the displayed number
   const [animated, setAnimated] = useState(0);
   useEffect(() => {
@@ -245,6 +258,7 @@ export function SpeedTest() {
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, [displayed]);
+
 
   const isDownloading = phase === "ping" || phase === "download";
   const heading =
