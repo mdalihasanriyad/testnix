@@ -377,20 +377,22 @@ export function SpeedTest() {
         </div>
       </div>
 
-      {/* Live stats row during active test */}
-      {phase !== "idle" && phase !== "done" && (
+      {/* Live stats row during active test, and locked final stats after done */}
+      {phase !== "idle" && (
         <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm text-neutral-600 sm:text-base animate-fade-in">
-          <span className="flex items-baseline gap-1.5">
-            <span className="text-neutral-400">Time</span>
-            <span className="font-bold tabular-nums text-neutral-900">
-              {elapsed.toFixed(1)}
+          {phase !== "done" && (
+            <span className="flex items-baseline gap-1.5">
+              <span className="text-neutral-400">Time</span>
+              <span className="font-bold tabular-nums text-neutral-900">
+                {elapsed.toFixed(1)}
+              </span>
+              <span className="text-xs text-neutral-400">s</span>
             </span>
-            <span className="text-xs text-neutral-400">s</span>
-          </span>
+          )}
           <span className="flex items-baseline gap-1.5">
             <span className="text-neutral-400">Ping</span>
             <span className={`font-bold tabular-nums ${phase === "ping" ? "text-[var(--testnix-red)]" : "text-neutral-900"}`}>
-              {livePing ?? "—"}
+              {phase === "done" ? (pingLoaded ?? livePing ?? "—") : (livePing ?? "—")}
             </span>
             <span className="text-xs text-neutral-400">ms</span>
           </span>
