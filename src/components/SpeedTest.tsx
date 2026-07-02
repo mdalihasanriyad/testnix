@@ -34,7 +34,9 @@ export function SpeedTest() {
   const [showMore, setShowMore] = useState(false);
   const [extrasRunning, setExtrasRunning] = useState(false);
   const [livePing, setLivePing] = useState<number | null>(null);
+  const [elapsed, setElapsed] = useState(0);
   const startedRef = useRef(false);
+
 
   const measurePing = useCallback(async (setter: (n: number) => void) => {
     const samples: number[] = [];
