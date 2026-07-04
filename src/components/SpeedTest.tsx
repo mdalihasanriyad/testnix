@@ -13,9 +13,11 @@ function formatSpeed(mbps: number) {
   return mbps.toFixed(2);
 }
 
-function buildShareUrl(mbps: number) {
+function buildShareUrl(values: { download: number; upload: number; ping: number }) {
   const url = new URL(window.location.href);
-  url.searchParams.set("speed", mbps.toFixed(2));
+  url.searchParams.set("speed", values.download.toFixed(2));
+  url.searchParams.set("upload", values.upload.toFixed(2));
+  url.searchParams.set("ping", Math.round(values.ping).toString());
   url.searchParams.set("shared", "1");
   return url.toString();
 }
