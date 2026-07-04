@@ -302,9 +302,9 @@ export function SpeedTest() {
   const shownNumber = phase === "done" ? (final ?? 0) : animated;
 
   const handleShare = useCallback(async () => {
-    if (final === null) return;
-    const url = buildShareUrl(final);
-    const text = `Testnix.net - My internet speed is ${formatSpeed(final)} Mbps. Check your speed at ${url}`;
+    if (final === null || upload === null || pingLoaded === null) return;
+    const url = buildShareUrl({ download: final, upload, ping: pingLoaded });
+    const text = `Testnix.net - Download: ${formatSpeed(final)} Mbps, Upload: ${formatSpeed(upload)} Mbps, Ping: ${pingLoaded}ms. Check your speed at ${url}`;
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -312,7 +312,7 @@ export function SpeedTest() {
     } catch {
       // ignore
     }
-  }, [final]);
+  }, [final, upload, pingLoaded]);
 
   const showReload = phase === "done" && !extrasRunning;
 
