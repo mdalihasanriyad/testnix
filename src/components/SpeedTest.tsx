@@ -434,6 +434,17 @@ export function SpeedTest() {
           </button>
         </div>
       )}
+      {phase === "done" && final !== null && upload !== null && pingLoaded !== null && (
+        <div className="mt-4 animate-fade-in">
+          <button
+            type="button"
+            onClick={() => void handleShare()}
+            className="rounded-lg border-2 border-neutral-900 bg-white px-8 py-3 text-base font-semibold text-neutral-900 transition hover:bg-neutral-50 active:scale-95"
+          >
+            {copied ? "Copied!" : "Copy results link"}
+          </button>
+        </div>
+      )}
       {phase === "done" && !showMore && (
         <div className="mt-10">
           <button
