@@ -17,10 +17,16 @@ function formatSpeed(mbps: number) {
 
 export const Route = createFileRoute("/results")({
   validateSearch: zodValidator(resultsSearchSchema),
-  head: () => {
-    const search = Route.useSearch();
-    const title = `Testnix Result - ${formatSpeed(search.speed)} Mbps down, ${formatSpeed(search.upload)} Mbps up, ${Math.round(search.ping)}ms ping`;
-    const description = `View this internet speed test result: Download ${formatSpeed(search.speed)} Mbps, Upload ${formatSpeed(search.upload)} Mbps, Ping ${Math.round(search.ping)}ms.`;
+  loaderDeps: ({ search }) => ({ search }),
+  loader: ({ deps }) => {
+    const { speed, upload, ping } = deps.search;
+    const title = `Testnix Result - ${formatSpeed(speed)} Mbps down, ${formatSpeed(upload)} Mbps up, ${Math.round(ping)}ms ping`;
+    const description = `View this internet speed test result: Download ${formatSpeed(speed)} Mbps, Upload ${formatSpeed(upload)} Mbps, Ping ${Math.round(ping)}ms.`;
+    return { title, description };
+  },
+  head: ({ loaderData }) => {
+    const title = loaderData?.title ?? "Testnix Result - Internet Speed Test";
+    const description = loaderData?.description ?? "View this internet speed test result on Testnix.";
     return {
       meta: [
         { title },

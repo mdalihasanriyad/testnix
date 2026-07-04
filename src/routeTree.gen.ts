@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ResultsRouteImport } from './routes/results'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPingRouteImport } from './routes/api/ping'
 import { Route as ApiDownloadTestRouteImport } from './routes/api/download-test'
@@ -17,6 +18,11 @@ import { Route as ApiDownloadTestRouteImport } from './routes/api/download-test'
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResultsRoute = ResultsRouteImport.update({
+  id: '/results',
+  path: '/results',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,12 +43,14 @@ const ApiDownloadTestRoute = ApiDownloadTestRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/results': typeof ResultsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/download-test': typeof ApiDownloadTestRoute
   '/api/ping': typeof ApiPingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/results': typeof ResultsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/download-test': typeof ApiDownloadTestRoute
   '/api/ping': typeof ApiPingRoute
@@ -50,20 +58,33 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/results': typeof ResultsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/download-test': typeof ApiDownloadTestRoute
   '/api/ping': typeof ApiPingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sitemap.xml' | '/api/download-test' | '/api/ping'
+  fullPaths:
+    | '/'
+    | '/results'
+    | '/sitemap.xml'
+    | '/api/download-test'
+    | '/api/ping'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sitemap.xml' | '/api/download-test' | '/api/ping'
-  id: '__root__' | '/' | '/sitemap.xml' | '/api/download-test' | '/api/ping'
+  to: '/' | '/results' | '/sitemap.xml' | '/api/download-test' | '/api/ping'
+  id:
+    | '__root__'
+    | '/'
+    | '/results'
+    | '/sitemap.xml'
+    | '/api/download-test'
+    | '/api/ping'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ResultsRoute: typeof ResultsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiDownloadTestRoute: typeof ApiDownloadTestRoute
   ApiPingRoute: typeof ApiPingRoute
@@ -76,6 +97,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/results': {
+      id: '/results'
+      path: '/results'
+      fullPath: '/results'
+      preLoaderRoute: typeof ResultsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -104,6 +132,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ResultsRoute: ResultsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiDownloadTestRoute: ApiDownloadTestRoute,
   ApiPingRoute: ApiPingRoute,
