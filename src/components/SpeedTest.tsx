@@ -413,8 +413,18 @@ export function SpeedTest() {
         </div>
       )}
 
-
-      {/* Show more info button (fast.com style) */}
+      {/* Prominent run-again button after the test completes */}
+      {phase === "done" && (
+        <div className="mt-10 animate-fade-in">
+          <button
+            type="button"
+            onClick={() => void runTest()}
+            className="rounded-lg bg-[var(--testnix-red)] px-10 py-4 text-lg font-semibold text-white shadow-md transition hover:brightness-110 active:scale-95"
+          >
+            Run test again
+          </button>
+        </div>
+      )}
       {phase === "done" && !showMore && (
         <div className="mt-10">
           <button
