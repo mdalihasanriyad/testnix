@@ -13,9 +13,11 @@ function formatSpeed(mbps: number) {
   return mbps.toFixed(2);
 }
 
-function buildShareUrl(mbps: number) {
+function buildShareUrl(values: { download: number; upload: number; ping: number }) {
   const url = new URL(window.location.href);
-  url.searchParams.set("speed", mbps.toFixed(2));
+  url.searchParams.set("speed", values.download.toFixed(2));
+  url.searchParams.set("upload", values.upload.toFixed(2));
+  url.searchParams.set("ping", Math.round(values.ping).toString());
   url.searchParams.set("shared", "1");
   return url.toString();
 }
@@ -229,23 +231,30 @@ export function SpeedTest() {
   }, []);
 
   useEffect(() => {
-    if (phase === "done" && final !== null && typeof window !== "undefined") {
+    if (phase === "done" && final !== null && upload !== null && pingLoaded !== null && typeof window !== "undefined") {
       const url = new URL(window.location.href);
       url.searchParams.set("speed", final.toFixed(2));
+      url.searchParams.set("upload", upload.toFixed(2));
+      url.searchParams.set("ping", Math.round(pingLoaded).toString());
       url.searchParams.set("shared", "1");
       window.history.replaceState({}, "", url);
     }
-  }, [phase, final]);
+  }, [phase, final, upload, pingLoaded]);
 
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
 
     const sharedSpeed = typeof search.speed === "string" ? parseFloat(search.speed) : null;
+    const sharedUpload = typeof search.upload === "string" ? parseFloat(search.upload) : null;
+    const sharedPing = typeof search.ping === "string" ? parseFloat(search.ping) : null;
     if (sharedSpeed && !Number.isNaN(sharedSpeed)) {
       setFinal(sharedSpeed);
+      if (sharedUpload && !Number.isNaN(sharedUpload)) setUpload(sharedUpload);
+      if (sharedPing && !Number.isNaN(sharedPing)) setPingLoaded(sharedPing);
       setPhase("done");
       setDisplayed(sharedSpeed);
+      setShowMore(true);
       return;
     }
 
@@ -293,9 +302,9 @@ export function SpeedTest() {
   const shownNumber = phase === "done" ? (final ?? 0) : animated;
 
   const handleShare = useCallback(async () => {
-    if (final === null) return;
-    const url = buildShareUrl(final);
-    const text = `Testnix.net - My internet speed is ${formatSpeed(final)} Mbps. Check your speed at ${url}`;
+    if (final === null || upload === null || pingLoaded === null) return;
+    const url = buildShareUrl({ download: final, upload, ping: pingLoaded });
+    const text = `Testnix.net - Download: ${formatSpeed(final)} Mbps, Upload: ${formatSpeed(upload)} Mbps, Ping: ${pingLoaded}ms. Check your speed at ${url}`;
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -303,7 +312,7 @@ export function SpeedTest() {
     } catch {
       // ignore
     }
-  }, [final]);
+  }, [final, upload, pingLoaded]);
 
   const showReload = phase === "done" && !extrasRunning;
 
@@ -422,6 +431,17 @@ export function SpeedTest() {
             className="rounded-lg bg-[var(--testnix-red)] px-10 py-4 text-lg font-semibold text-white shadow-md transition hover:brightness-110 active:scale-95"
           >
             Run test again
+          </button>
+        </div>
+      )}
+      {phase === "done" && final !== null && upload !== null && pingLoaded !== null && (
+        <div className="mt-4 animate-fade-in">
+          <button
+            type="button"
+            onClick={() => void handleShare()}
+            className="rounded-lg border-2 border-neutral-900 bg-white px-8 py-3 text-base font-semibold text-neutral-900 transition hover:bg-neutral-50 active:scale-95"
+          >
+            {copied ? "Copied!" : "Copy results link"}
           </button>
         </div>
       )}
