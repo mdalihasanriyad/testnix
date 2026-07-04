@@ -230,16 +230,6 @@ export function SpeedTest() {
     setShowMore(true);
   }, []);
 
-  useEffect(() => {
-    if (phase === "done" && final !== null && upload !== null && pingLoaded !== null && typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("speed", final.toFixed(2));
-      url.searchParams.set("upload", upload.toFixed(2));
-      url.searchParams.set("ping", Math.round(pingLoaded).toString());
-      url.searchParams.set("shared", "1");
-      window.history.replaceState({}, "", url);
-    }
-  }, [phase, final, upload, pingLoaded]);
 
   useEffect(() => {
     if (startedRef.current) return;
