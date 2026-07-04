@@ -14,7 +14,7 @@ function formatSpeed(mbps: number) {
 }
 
 function buildShareUrl(values: { download: number; upload: number; ping: number }) {
-  const url = new URL(window.location.href);
+  const url = new URL("/results", window.location.href);
   url.searchParams.set("speed", values.download.toFixed(2));
   url.searchParams.set("upload", values.upload.toFixed(2));
   url.searchParams.set("ping", Math.round(values.ping).toString());
@@ -230,16 +230,6 @@ export function SpeedTest() {
     setShowMore(true);
   }, []);
 
-  useEffect(() => {
-    if (phase === "done" && final !== null && upload !== null && pingLoaded !== null && typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("speed", final.toFixed(2));
-      url.searchParams.set("upload", upload.toFixed(2));
-      url.searchParams.set("ping", Math.round(pingLoaded).toString());
-      url.searchParams.set("shared", "1");
-      window.history.replaceState({}, "", url);
-    }
-  }, [phase, final, upload, pingLoaded]);
 
   useEffect(() => {
     if (startedRef.current) return;
