@@ -142,14 +142,17 @@ export function SpeedTest() {
   }, []);
 
   const runUpload = useCallback(async () => {
-    const UPLOAD_CHUNK_BYTES = 8 * 1024 * 1024;
-    const UPLOAD_STREAMS = 4;
-    const UPLOAD_DURATION_MS = 12_000;
+    const UPLOAD_CHUNK_BYTES = 1 * 1024 * 1024;
+    const UPLOAD_STREAMS = 6;
+    const UPLOAD_DURATION_MS = 10_000;
     const WARMUP_MS = 1_500;
 
     const payload = new Uint8Array(UPLOAD_CHUNK_BYTES);
-    crypto.getRandomValues(payload);
+    for (let off = 0; off < payload.byteLength; off += 65536) {
+      crypto.getRandomValues(payload.subarray(off, Math.min(off + 65536, payload.byteLength)));
+    }
 
+    const controller = new AbortController();
     const start = performance.now();
     let totalBytes = 0;
     let measuredBytes = 0;
@@ -194,6 +197,7 @@ export function SpeedTest() {
             method: "POST",
             body: payload,
             cache: "no-store",
+            signal: controller.signal,
           });
           totalBytes += payload.byteLength;
           if (warmupDone) measuredBytes += payload.byteLength;
@@ -206,6 +210,7 @@ export function SpeedTest() {
     const workers = Array.from({ length: UPLOAD_STREAMS }, () => worker());
     await new Promise((r) => setTimeout(r, UPLOAD_DURATION_MS));
     stopped = true;
+    controller.abort();
     clearInterval(interval);
     await Promise.allSettled(workers);
 
@@ -215,6 +220,8 @@ export function SpeedTest() {
     setUpload(mbps);
     setUploadedMB(totalBytes / (1024 * 1024));
   }, []);
+
+
 
 
   const runTest = useCallback(async () => {
