@@ -142,11 +142,19 @@ export function SpeedTest() {
   }, []);
 
   const runUpload = useCallback(async () => {
-    const payload = new Uint8Array(2 * 1024 * 1024);
+    const UPLOAD_CHUNK_BYTES = 8 * 1024 * 1024;
+    const UPLOAD_STREAMS = 4;
+    const UPLOAD_DURATION_MS = 12_000;
+    const WARMUP_MS = 1_500;
+
+    const payload = new Uint8Array(UPLOAD_CHUNK_BYTES);
     crypto.getRandomValues(payload);
-    const DURATION = 5_000;
+
     const start = performance.now();
     let totalBytes = 0;
+    let measuredBytes = 0;
+    let measureStart = start;
+    let warmupDone = false;
     let stopped = false;
 
     setDisplayed(0);
@@ -157,9 +165,16 @@ export function SpeedTest() {
     const tick = () => {
       if (stopped) return;
       const now = performance.now();
+      if (!warmupDone && now - start >= WARMUP_MS) {
+        warmupDone = true;
+        measureStart = now;
+        measuredBytes = 0;
+        lastBytes = totalBytes;
+        lastTime = now;
+      }
       const deltaBytes = totalBytes - lastBytes;
       const deltaTime = (now - lastTime) / 1000;
-      if (deltaTime > 0) {
+      if (warmupDone && deltaTime > 0) {
         const instantMbps = (deltaBytes * 8) / 1_000_000 / deltaTime;
         samples.push(instantMbps);
         if (samples.length > 5) samples.shift();
@@ -172,7 +187,6 @@ export function SpeedTest() {
     };
     const interval = setInterval(tick, 200);
 
-
     const worker = async () => {
       while (!stopped) {
         try {
@@ -182,24 +196,26 @@ export function SpeedTest() {
             cache: "no-store",
           });
           totalBytes += payload.byteLength;
+          if (warmupDone) measuredBytes += payload.byteLength;
         } catch {
           break;
         }
       }
     };
 
-    const workers = [worker(), worker()];
-    await new Promise((r) => setTimeout(r, DURATION));
+    const workers = Array.from({ length: UPLOAD_STREAMS }, () => worker());
+    await new Promise((r) => setTimeout(r, UPLOAD_DURATION_MS));
     stopped = true;
     clearInterval(interval);
     await Promise.allSettled(workers);
 
-    const elapsed = (performance.now() - start) / 1000;
-    const mbps = (totalBytes * 8) / 1_000_000 / Math.max(elapsed, 0.001);
+    const elapsedSec = (performance.now() - measureStart) / 1000;
+    const mbps = (measuredBytes * 8) / 1_000_000 / Math.max(elapsedSec, 0.001);
     setDisplayed(mbps);
     setUpload(mbps);
     setUploadedMB(totalBytes / (1024 * 1024));
   }, []);
+
 
   const runTest = useCallback(async () => {
     setFinal(null);
