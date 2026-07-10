@@ -320,6 +320,7 @@ export function SpeedTest() {
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
+    setRecent(loadRecent());
 
     const sharedSpeed = typeof search.speed === "string" ? parseFloat(search.speed) : null;
     const sharedUpload = typeof search.upload === "string" ? parseFloat(search.upload) : null;
