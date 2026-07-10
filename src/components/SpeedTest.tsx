@@ -150,7 +150,7 @@ export function SpeedTest() {
     return finalMbps;
   }, []);
 
-  const runUpload = useCallback(async () => {
+  const runUpload = useCallback(async (runId: number) => {
     const UPLOAD_CHUNK_BYTES = 1 * 1024 * 1024;
     const UPLOAD_STREAMS = 6;
     const UPLOAD_DURATION_MS = 10_000;
@@ -162,6 +162,7 @@ export function SpeedTest() {
     }
 
     const controller = new AbortController();
+    activeControllerRef.current = controller;
     const start = performance.now();
     let totalBytes = 0;
     let measuredBytes = 0;
@@ -175,7 +176,7 @@ export function SpeedTest() {
     let lastTime = start;
 
     const tick = () => {
-      if (stopped) return;
+      if (stopped || runId !== runIdRef.current) return;
       const now = performance.now();
       if (!warmupDone && now - start >= WARMUP_MS) {
         warmupDone = true;
@@ -223,6 +224,7 @@ export function SpeedTest() {
     clearInterval(interval);
     await Promise.allSettled(workers);
 
+    if (runId !== runIdRef.current) return;
     const elapsedSec = (performance.now() - measureStart) / 1000;
     const mbps = (measuredBytes * 8) / 1_000_000 / Math.max(elapsedSec, 0.001);
     setDisplayed(mbps);
