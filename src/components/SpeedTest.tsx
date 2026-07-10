@@ -79,6 +79,9 @@ export function SpeedTest() {
   const [extrasRunning, setExtrasRunning] = useState(false);
   const [livePing, setLivePing] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [recent, setRecent] = useState<RecentTest[]>([]);
+  const savedRunIdRef = useRef<number | null>(null);
+  const fromSharedRef = useRef(false);
   const startedRef = useRef(false);
   const runIdRef = useRef(0);
   const activeControllerRef = useRef<AbortController | null>(null);
