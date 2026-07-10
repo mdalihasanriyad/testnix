@@ -81,8 +81,9 @@ export function SpeedTest() {
     }
   }, []);
 
-  const runDownload = useCallback(async () => {
+  const runDownload = useCallback(async (runId: number) => {
     const controller = new AbortController();
+    activeControllerRef.current = controller;
     let totalBytes = 0;
     const startTime = performance.now();
     let stopped = false;
@@ -91,7 +92,7 @@ export function SpeedTest() {
     let lastTime = startTime;
 
     const tick = () => {
-      if (stopped) return;
+      if (stopped || runId !== runIdRef.current) return;
       const now = performance.now();
       const deltaBytes = totalBytes - lastBytes;
       const deltaTime = (now - lastTime) / 1000;
@@ -140,6 +141,7 @@ export function SpeedTest() {
     clearInterval(interval);
     await Promise.allSettled(workers);
 
+    if (runId !== runIdRef.current) return;
     const elapsed = (performance.now() - startTime) / 1000;
     const finalMbps = (totalBytes * 8) / 1_000_000 / Math.max(elapsed, 0.001);
     setDisplayed(finalMbps);
