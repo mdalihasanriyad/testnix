@@ -326,6 +326,7 @@ export function SpeedTest() {
     const sharedUpload = typeof search.upload === "string" ? parseFloat(search.upload) : null;
     const sharedPing = typeof search.ping === "string" ? parseFloat(search.ping) : null;
     if (sharedSpeed && !Number.isNaN(sharedSpeed)) {
+      fromSharedRef.current = true;
       setFinal(sharedSpeed);
       if (sharedUpload && !Number.isNaN(sharedUpload)) setUpload(sharedUpload);
       if (sharedPing && !Number.isNaN(sharedPing)) setPingLoaded(sharedPing);
