@@ -38,9 +38,16 @@ export function SpeedTest() {
   const [livePing, setLivePing] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const startedRef = useRef(false);
+  const runIdRef = useRef(0);
+  const activeControllerRef = useRef<AbortController | null>(null);
 
+  const abortActive = useCallback(() => {
+    activeControllerRef.current?.abort();
+    activeControllerRef.current = null;
+    runIdRef.current += 1;
+  }, []);
 
-  const measurePing = useCallback(async (setter: (n: number) => void) => {
+  const measurePing = useCallback(async (setter: (n: number) => void, runId: number) => {
     const samples: number[] = [];
     const PROBES_PER_UPDATE = 3;
     const PING_DURATION_MS = 2_500;
