@@ -55,8 +55,10 @@ export function SpeedTest() {
     let probeIdx = 0;
 
     while (performance.now() - startTime < PING_DURATION_MS) {
+      if (runId !== runIdRef.current) break;
       const batch: number[] = [];
       for (let j = 0; j < PROBES_PER_UPDATE; j++) {
+        if (runId !== runIdRef.current) break;
         const t = performance.now();
         try {
           await fetch(`/api/ping?t=${Date.now()}-${probeIdx++}`, { cache: "no-store" });
@@ -67,13 +69,13 @@ export function SpeedTest() {
           // ignore failed probes
         }
       }
-      if (batch.length) {
+      if (batch.length && runId === runIdRef.current) {
         const avg = Math.round(batch.reduce((a, b) => a + b, 0) / batch.length);
         setLivePing(avg);
       }
     }
 
-    if (samples.length) {
+    if (samples.length && runId === runIdRef.current) {
       const sorted = [...samples].sort((a, b) => a - b);
       const median = Math.round(sorted[Math.floor(sorted.length / 2)]);
       setter(median);
