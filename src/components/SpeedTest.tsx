@@ -453,6 +453,19 @@ export function SpeedTest() {
         </div>
       )}
 
+      {/* Restart button visible while the test is running */}
+      {phase !== "idle" && phase !== "done" && (
+        <div className="mt-6 animate-fade-in">
+          <button
+            type="button"
+            onClick={() => void runTest()}
+            className="rounded-lg border-2 border-neutral-900 bg-white px-6 py-2.5 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50 active:scale-95"
+          >
+            Run test again
+          </button>
+        </div>
+      )}
+
       {/* Prominent run-again button after the test completes */}
       {phase === "done" && (
         <div className="mt-10 animate-fade-in">
