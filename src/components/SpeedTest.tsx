@@ -352,6 +352,34 @@ export function SpeedTest() {
     return () => clearInterval(interval);
   }, [phase]);
 
+  // Save a completed run into recent tests (skip shared-URL loads and duplicate saves per run)
+  useEffect(() => {
+    if (phase !== "done") return;
+    if (fromSharedRef.current) return;
+    if (final === null || upload === null || pingLoaded === null) return;
+    if (savedRunIdRef.current === runIdRef.current) return;
+    savedRunIdRef.current = runIdRef.current;
+
+    const entry: RecentTest = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      download: final,
+      upload,
+      ping: pingLoaded,
+      at: Date.now(),
+    };
+    setRecent((prev) => {
+      const next = [entry, ...prev].slice(0, MAX_RECENT);
+      try {
+        window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+      } catch {
+        // ignore quota errors
+      }
+      return next;
+    });
+  }, [phase, final, upload, pingLoaded]);
+
+
+
   // Smoothly animate the displayed number
   const [animated, setAnimated] = useState(0);
   useEffect(() => {
