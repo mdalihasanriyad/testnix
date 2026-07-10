@@ -22,6 +22,48 @@ function buildShareUrl(values: { download: number; upload: number; ping: number 
   return url.toString();
 }
 
+type RecentTest = {
+  id: string;
+  download: number;
+  upload: number;
+  ping: number;
+  at: number;
+};
+
+const RECENT_KEY = "testnix.recentTests";
+const MAX_RECENT = 5;
+
+function loadRecent(): RecentTest[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(RECENT_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (r) =>
+        r &&
+        typeof r.download === "number" &&
+        typeof r.upload === "number" &&
+        typeof r.ping === "number",
+    );
+  } catch {
+    return [];
+  }
+}
+
+function formatWhen(ts: number) {
+  const diff = Date.now() - ts;
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
 export function SpeedTest() {
   const search = useSearch({ from: "/" });
   const [phase, setPhase] = useState<Phase>("idle");
