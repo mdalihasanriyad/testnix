@@ -232,6 +232,8 @@ export function SpeedTest() {
 
 
   const runTest = useCallback(async () => {
+    abortActive();
+    const runId = runIdRef.current;
     setFinal(null);
     setPingUnloaded(null);
     setPingLoaded(null);
@@ -243,18 +245,21 @@ export function SpeedTest() {
     setLivePing(null);
 
     setPhase("ping");
-    await measurePing(setPingUnloaded);
+    await measurePing(setPingUnloaded, runId);
+    if (runId !== runIdRef.current) return;
 
     setPhase("download");
-    await runDownload();
+    await runDownload(runId);
+    if (runId !== runIdRef.current) return;
 
     setPhase("upload");
-    await measurePing(setPingLoaded);
-    await runUpload();
+    await measurePing(setPingLoaded, runId);
+    await runUpload(runId);
+    if (runId !== runIdRef.current) return;
 
     setPhase("done");
     setShowMore(true);
-  }, [measurePing, runDownload, runUpload]);
+  }, [abortActive, measurePing, runDownload, runUpload]);
 
   const runExtras = useCallback(async () => {
     setShowMore(true);
