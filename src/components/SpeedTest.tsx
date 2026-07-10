@@ -632,6 +632,54 @@ export function SpeedTest() {
           </div>
         </>
       )}
+
+      {recent.length > 0 && (
+        <div className="mt-12 w-full max-w-3xl animate-fade-in">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-left text-lg font-bold text-neutral-900">
+              Recent tests
+            </h3>
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  window.localStorage.removeItem(RECENT_KEY);
+                } catch {
+                  // ignore
+                }
+                setRecent([]);
+              }}
+              className="text-xs text-neutral-500 hover:text-neutral-900"
+            >
+              Clear
+            </button>
+          </div>
+          <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
+            {recent.map((r) => (
+              <li
+                key={r.id}
+                className="grid grid-cols-4 items-baseline gap-2 px-4 py-3 text-left text-sm"
+              >
+                <span className="text-xs text-neutral-500">
+                  {formatWhen(r.at)}
+                </span>
+                <span className="tabular-nums text-neutral-900">
+                  <span className="font-semibold">{formatSpeed(r.download)}</span>
+                  <span className="ml-1 text-xs text-neutral-400">↓ Mbps</span>
+                </span>
+                <span className="tabular-nums text-neutral-900">
+                  <span className="font-semibold">{formatSpeed(r.upload)}</span>
+                  <span className="ml-1 text-xs text-neutral-400">↑ Mbps</span>
+                </span>
+                <span className="tabular-nums text-neutral-900">
+                  <span className="font-semibold">{Math.round(r.ping)}</span>
+                  <span className="ml-1 text-xs text-neutral-400">ms</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   );
 }
