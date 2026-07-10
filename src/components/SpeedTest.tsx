@@ -22,6 +22,48 @@ function buildShareUrl(values: { download: number; upload: number; ping: number 
   return url.toString();
 }
 
+type RecentTest = {
+  id: string;
+  download: number;
+  upload: number;
+  ping: number;
+  at: number;
+};
+
+const RECENT_KEY = "testnix.recentTests";
+const MAX_RECENT = 5;
+
+function loadRecent(): RecentTest[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(RECENT_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (r) =>
+        r &&
+        typeof r.download === "number" &&
+        typeof r.upload === "number" &&
+        typeof r.ping === "number",
+    );
+  } catch {
+    return [];
+  }
+}
+
+function formatWhen(ts: number) {
+  const diff = Date.now() - ts;
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
 export function SpeedTest() {
   const search = useSearch({ from: "/" });
   const [phase, setPhase] = useState<Phase>("idle");
@@ -37,6 +79,9 @@ export function SpeedTest() {
   const [extrasRunning, setExtrasRunning] = useState(false);
   const [livePing, setLivePing] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [recent, setRecent] = useState<RecentTest[]>([]);
+  const savedRunIdRef = useRef<number | null>(null);
+  const fromSharedRef = useRef(false);
   const startedRef = useRef(false);
   const runIdRef = useRef(0);
   const activeControllerRef = useRef<AbortController | null>(null);
@@ -275,11 +320,13 @@ export function SpeedTest() {
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
+    setRecent(loadRecent());
 
     const sharedSpeed = typeof search.speed === "string" ? parseFloat(search.speed) : null;
     const sharedUpload = typeof search.upload === "string" ? parseFloat(search.upload) : null;
     const sharedPing = typeof search.ping === "string" ? parseFloat(search.ping) : null;
     if (sharedSpeed && !Number.isNaN(sharedSpeed)) {
+      fromSharedRef.current = true;
       setFinal(sharedSpeed);
       if (sharedUpload && !Number.isNaN(sharedUpload)) setUpload(sharedUpload);
       if (sharedPing && !Number.isNaN(sharedPing)) setPingLoaded(sharedPing);
@@ -304,6 +351,34 @@ export function SpeedTest() {
     }, 200);
     return () => clearInterval(interval);
   }, [phase]);
+
+  // Save a completed run into recent tests (skip shared-URL loads and duplicate saves per run)
+  useEffect(() => {
+    if (phase !== "done") return;
+    if (fromSharedRef.current) return;
+    if (final === null || upload === null || pingLoaded === null) return;
+    if (savedRunIdRef.current === runIdRef.current) return;
+    savedRunIdRef.current = runIdRef.current;
+
+    const entry: RecentTest = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      download: final,
+      upload,
+      ping: pingLoaded,
+      at: Date.now(),
+    };
+    setRecent((prev) => {
+      const next = [entry, ...prev].slice(0, MAX_RECENT);
+      try {
+        window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+      } catch {
+        // ignore quota errors
+      }
+      return next;
+    });
+  }, [phase, final, upload, pingLoaded]);
+
+
 
   // Smoothly animate the displayed number
   const [animated, setAnimated] = useState(0);
@@ -556,6 +631,54 @@ export function SpeedTest() {
             </span>
           </div>
         </>
+      )}
+
+      {recent.length > 0 && (
+        <div className="mt-12 w-full max-w-3xl animate-fade-in">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-left text-lg font-bold text-neutral-900">
+              Recent tests
+            </h3>
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  window.localStorage.removeItem(RECENT_KEY);
+                } catch {
+                  // ignore
+                }
+                setRecent([]);
+              }}
+              className="text-xs text-neutral-500 hover:text-neutral-900"
+            >
+              Clear
+            </button>
+          </div>
+          <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
+            {recent.map((r) => (
+              <li
+                key={r.id}
+                className="grid grid-cols-4 items-baseline gap-2 px-4 py-3 text-left text-sm"
+              >
+                <span className="text-xs text-neutral-500">
+                  {formatWhen(r.at)}
+                </span>
+                <span className="tabular-nums text-neutral-900">
+                  <span className="font-semibold">{formatSpeed(r.download)}</span>
+                  <span className="ml-1 text-xs text-neutral-400">↓ Mbps</span>
+                </span>
+                <span className="tabular-nums text-neutral-900">
+                  <span className="font-semibold">{formatSpeed(r.upload)}</span>
+                  <span className="ml-1 text-xs text-neutral-400">↑ Mbps</span>
+                </span>
+                <span className="tabular-nums text-neutral-900">
+                  <span className="font-semibold">{Math.round(r.ping)}</span>
+                  <span className="ml-1 text-xs text-neutral-400">ms</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </section>
   );
