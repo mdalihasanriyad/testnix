@@ -38,9 +38,16 @@ export function SpeedTest() {
   const [livePing, setLivePing] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const startedRef = useRef(false);
+  const runIdRef = useRef(0);
+  const activeControllerRef = useRef<AbortController | null>(null);
 
+  const abortActive = useCallback(() => {
+    activeControllerRef.current?.abort();
+    activeControllerRef.current = null;
+    runIdRef.current += 1;
+  }, []);
 
-  const measurePing = useCallback(async (setter: (n: number) => void) => {
+  const measurePing = useCallback(async (setter: (n: number) => void, runId: number) => {
     const samples: number[] = [];
     const PROBES_PER_UPDATE = 3;
     const PING_DURATION_MS = 2_500;
@@ -48,8 +55,10 @@ export function SpeedTest() {
     let probeIdx = 0;
 
     while (performance.now() - startTime < PING_DURATION_MS) {
+      if (runId !== runIdRef.current) break;
       const batch: number[] = [];
       for (let j = 0; j < PROBES_PER_UPDATE; j++) {
+        if (runId !== runIdRef.current) break;
         const t = performance.now();
         try {
           await fetch(`/api/ping?t=${Date.now()}-${probeIdx++}`, { cache: "no-store" });
@@ -60,13 +69,13 @@ export function SpeedTest() {
           // ignore failed probes
         }
       }
-      if (batch.length) {
+      if (batch.length && runId === runIdRef.current) {
         const avg = Math.round(batch.reduce((a, b) => a + b, 0) / batch.length);
         setLivePing(avg);
       }
     }
 
-    if (samples.length) {
+    if (samples.length && runId === runIdRef.current) {
       const sorted = [...samples].sort((a, b) => a - b);
       const median = Math.round(sorted[Math.floor(sorted.length / 2)]);
       setter(median);
@@ -74,8 +83,9 @@ export function SpeedTest() {
     }
   }, []);
 
-  const runDownload = useCallback(async () => {
+  const runDownload = useCallback(async (runId: number) => {
     const controller = new AbortController();
+    activeControllerRef.current = controller;
     let totalBytes = 0;
     const startTime = performance.now();
     let stopped = false;
@@ -84,7 +94,7 @@ export function SpeedTest() {
     let lastTime = startTime;
 
     const tick = () => {
-      if (stopped) return;
+      if (stopped || runId !== runIdRef.current) return;
       const now = performance.now();
       const deltaBytes = totalBytes - lastBytes;
       const deltaTime = (now - lastTime) / 1000;
@@ -133,6 +143,7 @@ export function SpeedTest() {
     clearInterval(interval);
     await Promise.allSettled(workers);
 
+    if (runId !== runIdRef.current) return;
     const elapsed = (performance.now() - startTime) / 1000;
     const finalMbps = (totalBytes * 8) / 1_000_000 / Math.max(elapsed, 0.001);
     setDisplayed(finalMbps);
@@ -141,7 +152,7 @@ export function SpeedTest() {
     return finalMbps;
   }, []);
 
-  const runUpload = useCallback(async () => {
+  const runUpload = useCallback(async (runId: number) => {
     const UPLOAD_CHUNK_BYTES = 1 * 1024 * 1024;
     const UPLOAD_STREAMS = 6;
     const UPLOAD_DURATION_MS = 10_000;
@@ -153,6 +164,7 @@ export function SpeedTest() {
     }
 
     const controller = new AbortController();
+    activeControllerRef.current = controller;
     const start = performance.now();
     let totalBytes = 0;
     let measuredBytes = 0;
@@ -166,7 +178,7 @@ export function SpeedTest() {
     let lastTime = start;
 
     const tick = () => {
-      if (stopped) return;
+      if (stopped || runId !== runIdRef.current) return;
       const now = performance.now();
       if (!warmupDone && now - start >= WARMUP_MS) {
         warmupDone = true;
@@ -214,6 +226,7 @@ export function SpeedTest() {
     clearInterval(interval);
     await Promise.allSettled(workers);
 
+    if (runId !== runIdRef.current) return;
     const elapsedSec = (performance.now() - measureStart) / 1000;
     const mbps = (measuredBytes * 8) / 1_000_000 / Math.max(elapsedSec, 0.001);
     setDisplayed(mbps);
@@ -225,6 +238,8 @@ export function SpeedTest() {
 
 
   const runTest = useCallback(async () => {
+    abortActive();
+    const runId = runIdRef.current;
     setFinal(null);
     setPingUnloaded(null);
     setPingLoaded(null);
@@ -236,18 +251,21 @@ export function SpeedTest() {
     setLivePing(null);
 
     setPhase("ping");
-    await measurePing(setPingUnloaded);
+    await measurePing(setPingUnloaded, runId);
+    if (runId !== runIdRef.current) return;
 
     setPhase("download");
-    await runDownload();
+    await runDownload(runId);
+    if (runId !== runIdRef.current) return;
 
     setPhase("upload");
-    await measurePing(setPingLoaded);
-    await runUpload();
+    await measurePing(setPingLoaded, runId);
+    await runUpload(runId);
+    if (runId !== runIdRef.current) return;
 
     setPhase("done");
     setShowMore(true);
-  }, [measurePing, runDownload, runUpload]);
+  }, [abortActive, measurePing, runDownload, runUpload]);
 
   const runExtras = useCallback(async () => {
     setShowMore(true);
@@ -432,6 +450,19 @@ export function SpeedTest() {
             </span>
             <span className="text-xs text-neutral-400">Mbps</span>
           </span>
+        </div>
+      )}
+
+      {/* Restart button visible while the test is running */}
+      {phase !== "idle" && phase !== "done" && (
+        <div className="mt-6 animate-fade-in">
+          <button
+            type="button"
+            onClick={() => void runTest()}
+            className="rounded-lg border-2 border-neutral-900 bg-white px-6 py-2.5 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50 active:scale-95"
+          >
+            Run test again
+          </button>
         </div>
       )}
 
