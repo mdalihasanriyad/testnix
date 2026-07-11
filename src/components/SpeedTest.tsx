@@ -76,7 +76,7 @@ function formatTimestamp(ts: number) {
 
 function escapeCsv(value: string | number) {
   const str = String(value);
-  if (/[",\n]/.test(str)) return `"${str.replace(/"/g, """)}"`;
+  if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
   return str;
 }
 
