@@ -685,20 +685,29 @@ export function SpeedTest() {
             <h3 className="text-left text-lg font-bold text-neutral-900">
               Recent tests
             </h3>
-            <button
-              type="button"
-              onClick={() => {
-                try {
-                  window.localStorage.removeItem(RECENT_KEY);
-                } catch {
-                  // ignore
-                }
-                setRecent([]);
-              }}
-              className="text-xs text-neutral-500 hover:text-neutral-900"
-            >
-              Clear
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleExportRecent}
+                className="text-xs text-neutral-500 hover:text-neutral-900"
+              >
+                Export CSV
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    window.localStorage.removeItem(RECENT_KEY);
+                  } catch {
+                    // ignore
+                  }
+                  setRecent([]);
+                }}
+                className="text-xs text-neutral-500 hover:text-neutral-900"
+              >
+                Clear
+              </button>
+            </div>
           </div>
           <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
             {recent.map((r) => (
