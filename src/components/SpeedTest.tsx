@@ -74,6 +74,35 @@ function formatTimestamp(ts: number) {
   });
 }
 
+function escapeCsv(value: string | number) {
+  const str = String(value);
+  if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+  return str;
+}
+
+function buildRecentCsv(rows: RecentTest[]) {
+  const header = ["Timestamp", "Download (Mbps)", "Upload (Mbps)", "Ping (ms)"];
+  const lines = rows.map((r) => [
+    new Date(r.at).toISOString(),
+    r.download.toFixed(2),
+    r.upload.toFixed(2),
+    Math.round(r.ping),
+  ]);
+  return [header, ...lines].map((row) => row.map(escapeCsv).join(",")).join("\n");
+}
+
+function downloadCsv(filename: string, csvText: string) {
+  const blob = new Blob(["\uFEFF" + csvText], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 export function SpeedTest() {
   const search = useSearch({ from: "/" });
   const [phase, setPhase] = useState<Phase>("idle");
@@ -430,6 +459,13 @@ export function SpeedTest() {
     }
   }, [final, upload, pingLoaded]);
 
+  const handleExportRecent = useCallback(() => {
+    if (recent.length === 0) return;
+    const csv = buildRecentCsv(recent);
+    const date = new Date().toISOString().slice(0, 10);
+    downloadCsv(`testnix-recent-tests-${date}.csv`, csv);
+  }, [recent]);
+
   const showReload = phase === "done" && !extrasRunning;
 
   return (
@@ -649,20 +685,29 @@ export function SpeedTest() {
             <h3 className="text-left text-lg font-bold text-neutral-900">
               Recent tests
             </h3>
-            <button
-              type="button"
-              onClick={() => {
-                try {
-                  window.localStorage.removeItem(RECENT_KEY);
-                } catch {
-                  // ignore
-                }
-                setRecent([]);
-              }}
-              className="text-xs text-neutral-500 hover:text-neutral-900"
-            >
-              Clear
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleExportRecent}
+                className="text-xs text-neutral-500 hover:text-neutral-900"
+              >
+                Export CSV
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    window.localStorage.removeItem(RECENT_KEY);
+                  } catch {
+                    // ignore
+                  }
+                  setRecent([]);
+                }}
+                className="text-xs text-neutral-500 hover:text-neutral-900"
+              >
+                Clear
+              </button>
+            </div>
           </div>
           <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
             {recent.map((r) => (
