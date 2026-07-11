@@ -459,6 +459,13 @@ export function SpeedTest() {
     }
   }, [final, upload, pingLoaded]);
 
+  const handleExportRecent = useCallback(() => {
+    if (recent.length === 0) return;
+    const csv = buildRecentCsv(recent);
+    const date = new Date().toISOString().slice(0, 10);
+    downloadCsv(`testnix-recent-tests-${date}.csv`, csv);
+  }, [recent]);
+
   const showReload = phase === "done" && !extrasRunning;
 
   return (
