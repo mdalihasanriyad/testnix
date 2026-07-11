@@ -64,6 +64,16 @@ function formatWhen(ts: number) {
   return `${d}d ago`;
 }
 
+function formatTimestamp(ts: number) {
+  const d = new Date(ts);
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function SpeedTest() {
   const search = useSearch({ from: "/" });
   const [phase, setPhase] = useState<Phase>("idle");
@@ -658,11 +668,20 @@ export function SpeedTest() {
             {recent.map((r) => (
               <li
                 key={r.id}
-                className="grid grid-cols-4 items-baseline gap-2 px-4 py-3 text-left text-sm"
+                className="grid grid-cols-[1.5fr_1fr_1fr_1fr] items-baseline gap-2 px-4 py-3 text-left text-sm"
               >
-                <span className="text-xs text-neutral-500">
-                  {formatWhen(r.at)}
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-xs text-neutral-500">
+                    {formatWhen(r.at)}
+                  </span>
+                  <time
+                    className="text-[10px] text-neutral-400"
+                    dateTime={new Date(r.at).toISOString()}
+                    title={new Date(r.at).toLocaleString()}
+                  >
+                    {formatTimestamp(r.at)}
+                  </time>
+                </div>
                 <span className="tabular-nums text-neutral-900">
                   <span className="font-semibold">{formatSpeed(r.download)}</span>
                   <span className="ml-1 text-xs text-neutral-400">↓ Mbps</span>
