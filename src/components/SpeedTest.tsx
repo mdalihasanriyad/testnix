@@ -74,6 +74,35 @@ function formatTimestamp(ts: number) {
   });
 }
 
+function escapeCsv(value: string | number) {
+  const str = String(value);
+  if (/[",\n]/.test(str)) return `"${str.replace(/"/g, """)}"`;
+  return str;
+}
+
+function buildRecentCsv(rows: RecentTest[]) {
+  const header = ["Timestamp", "Download (Mbps)", "Upload (Mbps)", "Ping (ms)"];
+  const lines = rows.map((r) => [
+    new Date(r.at).toISOString(),
+    r.download.toFixed(2),
+    r.upload.toFixed(2),
+    Math.round(r.ping),
+  ]);
+  return [header, ...lines].map((row) => row.map(escapeCsv).join(",")).join("\n");
+}
+
+function downloadCsv(filename: string, csvText: string) {
+  const blob = new Blob(["\uFEFF" + csvText], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 export function SpeedTest() {
   const search = useSearch({ from: "/" });
   const [phase, setPhase] = useState<Phase>("idle");
