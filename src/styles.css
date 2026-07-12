@@ -193,3 +193,18 @@
   animation: fade-in 0.3s ease-out;
 }
 
+@utility skeleton {
+  background-color: var(--color-muted);
+  border-radius: calc(var(--radius) - 4px);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
