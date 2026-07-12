@@ -706,14 +706,7 @@ export function SpeedTest() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  try {
-                    window.localStorage.removeItem(RECENT_KEY);
-                  } catch {
-                    // ignore
-                  }
-                  setRecent([]);
-                }}
+                onClick={handleClearRecent}
                 className="text-xs text-neutral-500 hover:text-neutral-900"
               >
                 Clear
