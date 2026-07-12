@@ -466,6 +466,17 @@ export function SpeedTest() {
     downloadCsv(`testnix-recent-tests-${date}.csv`, csv);
   }, [recent]);
 
+  const handleClearRecent = useCallback(() => {
+    const ok = window.confirm("Clear all recent test history? This cannot be undone.");
+    if (!ok) return;
+    try {
+      window.localStorage.removeItem(RECENT_KEY);
+    } catch {
+      // ignore
+    }
+    setRecent([]);
+  }, []);
+
   const showReload = phase === "done" && !extrasRunning;
 
   return (
