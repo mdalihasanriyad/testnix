@@ -728,7 +728,20 @@ export function SpeedTest() {
             </div>
           )}
         </div>
-        {loadingRecent ? (
+        {recentError ? (
+          <div className="rounded-md border border-neutral-200 px-4 py-8 text-center">
+            <p className="text-sm text-neutral-600">
+              Couldn’t load your recent test history.
+            </p>
+            <button
+              type="button"
+              onClick={handleRetryRecent}
+              className="mt-3 rounded-lg bg-[var(--testnix-red)] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 active:scale-95"
+            >
+              Retry
+            </button>
+          </div>
+        ) : loadingRecent ? (
           <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
             {Array.from({ length: 3 }).map((_, i) => (
               <li
