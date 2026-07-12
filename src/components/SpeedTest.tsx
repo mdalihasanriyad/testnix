@@ -476,6 +476,22 @@ export function SpeedTest() {
     setRecent([]);
   }, []);
 
+  const fetchRecent = useCallback(() => {
+    setLoadingRecent(true);
+    setRecentError(false);
+    try {
+      setRecent(loadRecent());
+    } catch {
+      setRecentError(true);
+    } finally {
+      setLoadingRecent(false);
+    }
+  }, []);
+
+  const handleRetryRecent = useCallback(() => {
+    fetchRecent();
+  }, [fetchRecent]);
+
   const showReload = phase === "done" && !extrasRunning;
 
   return (
