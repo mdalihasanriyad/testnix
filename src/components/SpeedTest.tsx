@@ -35,21 +35,17 @@ const MAX_RECENT = 5;
 
 function loadRecent(): RecentTest[] {
   if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(RECENT_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (r) =>
-        r &&
-        typeof r.download === "number" &&
-        typeof r.upload === "number" &&
-        typeof r.ping === "number",
-    );
-  } catch {
-    return [];
-  }
+  const raw = window.localStorage.getItem(RECENT_KEY);
+  if (!raw) return [];
+  const parsed = JSON.parse(raw);
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter(
+    (r) =>
+      r &&
+      typeof r.download === "number" &&
+      typeof r.upload === "number" &&
+      typeof r.ping === "number",
+  );
 }
 
 function formatWhen(ts: number) {
@@ -120,6 +116,7 @@ export function SpeedTest() {
   const [elapsed, setElapsed] = useState(0);
   const [recent, setRecent] = useState<RecentTest[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(true);
+  const [recentError, setRecentError] = useState(false);
   const savedRunIdRef = useRef<number | null>(null);
   const fromSharedRef = useRef(false);
   const startedRef = useRef(false);
@@ -360,8 +357,7 @@ export function SpeedTest() {
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
-    setRecent(loadRecent());
-    setLoadingRecent(false);
+    fetchRecent();
 
     const sharedSpeed = typeof search.speed === "string" ? parseFloat(search.speed) : null;
     const sharedUpload = typeof search.upload === "string" ? parseFloat(search.upload) : null;
@@ -478,6 +474,22 @@ export function SpeedTest() {
     }
     setRecent([]);
   }, []);
+
+  const fetchRecent = useCallback(() => {
+    setLoadingRecent(true);
+    setRecentError(false);
+    try {
+      setRecent(loadRecent());
+    } catch {
+      setRecentError(true);
+    } finally {
+      setLoadingRecent(false);
+    }
+  }, []);
+
+  const handleRetryRecent = useCallback(() => {
+    fetchRecent();
+  }, [fetchRecent]);
 
   const showReload = phase === "done" && !extrasRunning;
 
@@ -716,7 +728,20 @@ export function SpeedTest() {
             </div>
           )}
         </div>
-        {loadingRecent ? (
+        {recentError ? (
+          <div className="rounded-md border border-neutral-200 px-4 py-8 text-center">
+            <p className="text-sm text-neutral-600">
+              Couldn’t load your recent test history.
+            </p>
+            <button
+              type="button"
+              onClick={handleRetryRecent}
+              className="mt-3 rounded-lg bg-[var(--testnix-red)] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 active:scale-95"
+            >
+              Retry
+            </button>
+          </div>
+        ) : loadingRecent ? (
           <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
             {Array.from({ length: 3 }).map((_, i) => (
               <li
