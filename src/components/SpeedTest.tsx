@@ -690,12 +690,12 @@ export function SpeedTest() {
         </>
       )}
 
-      {recent.length > 0 && (
-        <div className="mt-12 w-full max-w-3xl animate-fade-in">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-left text-lg font-bold text-neutral-900">
-              Recent tests
-            </h3>
+      <div className="mt-12 w-full max-w-3xl animate-fade-in">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-left text-lg font-bold text-neutral-900">
+            Recent tests
+          </h3>
+          {recent.length > 0 && (
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -712,7 +712,9 @@ export function SpeedTest() {
                 Clear
               </button>
             </div>
-          </div>
+          )}
+        </div>
+        {recent.length > 0 ? (
           <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
             {recent.map((r) => (
               <li
@@ -746,8 +748,12 @@ export function SpeedTest() {
               </li>
             ))}
           </ul>
-        </div>
-      )}
+        ) : (
+          <div className="rounded-md border border-neutral-200 px-4 py-8 text-center text-sm text-neutral-500">
+            No completed tests yet. Run a test to see your recent results here.
+          </div>
+        )}
+      </div>
     </section>
   );
 }
