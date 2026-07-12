@@ -35,21 +35,17 @@ const MAX_RECENT = 5;
 
 function loadRecent(): RecentTest[] {
   if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(RECENT_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (r) =>
-        r &&
-        typeof r.download === "number" &&
-        typeof r.upload === "number" &&
-        typeof r.ping === "number",
-    );
-  } catch {
-    return [];
-  }
+  const raw = window.localStorage.getItem(RECENT_KEY);
+  if (!raw) return [];
+  const parsed = JSON.parse(raw);
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter(
+    (r) =>
+      r &&
+      typeof r.download === "number" &&
+      typeof r.upload === "number" &&
+      typeof r.ping === "number",
+  );
 }
 
 function formatWhen(ts: number) {
