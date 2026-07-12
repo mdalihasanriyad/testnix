@@ -361,6 +361,7 @@ export function SpeedTest() {
     if (startedRef.current) return;
     startedRef.current = true;
     setRecent(loadRecent());
+    setLoadingRecent(false);
 
     const sharedSpeed = typeof search.speed === "string" ? parseFloat(search.speed) : null;
     const sharedUpload = typeof search.upload === "string" ? parseFloat(search.upload) : null;
