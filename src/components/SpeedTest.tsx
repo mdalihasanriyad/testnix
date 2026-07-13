@@ -1,5 +1,12 @@
 import { useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 type Phase = "idle" | "ping" | "download" | "upload" | "done";
 
@@ -117,6 +124,7 @@ export function SpeedTest() {
   const [recent, setRecent] = useState<RecentTest[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(true);
   const [recentError, setRecentError] = useState(false);
+  const [selectedTest, setSelectedTest] = useState<RecentTest | null>(null);
   const savedRunIdRef = useRef<number | null>(null);
   const fromSharedRef = useRef(false);
   const startedRef = useRef(false);
