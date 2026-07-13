@@ -791,7 +791,16 @@ export function SpeedTest() {
             {recent.map((r) => (
               <li
                 key={r.id}
-                className="grid grid-cols-[1.5fr_1fr_1fr_1fr] items-baseline gap-2 px-4 py-3 text-left text-sm"
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedTest(r)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelectedTest(r);
+                  }
+                }}
+                className="grid cursor-pointer grid-cols-[1.5fr_1fr_1fr_1fr] items-baseline gap-2 px-4 py-3 text-left text-sm transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
               >
                 <div className="flex flex-col">
                   <span className="text-xs text-neutral-500">
@@ -826,6 +835,60 @@ export function SpeedTest() {
           </div>
         )}
       </div>
+
+      <Dialog
+        open={selectedTest !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedTest(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Test details</DialogTitle>
+            <DialogDescription>
+              {selectedTest && (
+                <time
+                  dateTime={new Date(selectedTest.at).toISOString()}
+                  title={new Date(selectedTest.at).toLocaleString()}
+                >
+                  {new Date(selectedTest.at).toLocaleString(undefined, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </time>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedTest && (
+            <div className="mt-2 grid grid-cols-3 gap-4 text-center">
+              <div className="rounded-lg border border-neutral-200 p-4">
+                <p className="text-xs text-neutral-500">Download</p>
+                <p className="mt-1 text-2xl font-bold tabular-nums text-neutral-900">
+                  {formatSpeed(selectedTest.download)}
+                </p>
+                <p className="text-xs text-neutral-400">Mbps</p>
+              </div>
+              <div className="rounded-lg border border-neutral-200 p-4">
+                <p className="text-xs text-neutral-500">Upload</p>
+                <p className="mt-1 text-2xl font-bold tabular-nums text-neutral-900">
+                  {formatSpeed(selectedTest.upload)}
+                </p>
+                <p className="text-xs text-neutral-400">Mbps</p>
+              </div>
+              <div className="rounded-lg border border-neutral-200 p-4">
+                <p className="text-xs text-neutral-500">Ping</p>
+                <p className="mt-1 text-2xl font-bold tabular-nums text-neutral-900">
+                  {Math.round(selectedTest.ping)}
+                </p>
+                <p className="text-xs text-neutral-400">ms</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
