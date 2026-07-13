@@ -124,6 +124,7 @@ export function SpeedTest() {
   const [recent, setRecent] = useState<RecentTest[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(true);
   const [recentError, setRecentError] = useState(false);
+  const [selectedTest, setSelectedTest] = useState<RecentTest | null>(null);
   const savedRunIdRef = useRef<number | null>(null);
   const fromSharedRef = useRef(false);
   const startedRef = useRef(false);
