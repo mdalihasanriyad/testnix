@@ -477,9 +477,9 @@ export function SpeedTest() {
 
   const fetchRecent = useCallback(() => {
     setLoadingRecent(true);
-    setRecentError(false);
     try {
       setRecent(loadRecent());
+      setRecentError(false);
     } catch {
       setRecentError(true);
     } finally {
