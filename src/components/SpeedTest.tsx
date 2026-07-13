@@ -736,9 +736,28 @@ export function SpeedTest() {
             <button
               type="button"
               onClick={handleRetryRecent}
-              className="mt-3 rounded-lg bg-[var(--testnix-red)] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 active:scale-95"
+              disabled={loadingRecent}
+              className="mt-3 inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--testnix-red)] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Retry
+              {loadingRecent ? (
+                <>
+                  <svg
+                    className="h-4 w-4 animate-spin"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                    <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+                  </svg>
+                  Retrying…
+                </>
+              ) : (
+                "Retry"
+              )}
             </button>
           </div>
         ) : loadingRecent ? (
