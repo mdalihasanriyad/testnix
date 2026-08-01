@@ -484,6 +484,19 @@ export function SpeedTest() {
     downloadCsv(`testnix-recent-tests-${date}.csv`, csv);
   }, [recent]);
 
+  const handleExportJsonRecent = useCallback(() => {
+    if (recent.length === 0) return;
+    const payload = recent.map((r) => ({
+      timestamp: new Date(r.at).toISOString(),
+      downloadMbps: Number(r.download.toFixed(2)),
+      uploadMbps: Number(r.upload.toFixed(2)),
+      pingMs: Math.round(r.ping),
+      url: typeof window !== "undefined" ? window.location.origin + buildShareUrl({ download: r.download, upload: r.upload, ping: r.ping }) : "",
+    }));
+    const date = new Date().toISOString().slice(0, 10);
+    downloadJson(`testnix-recent-tests-${date}.json`, JSON.stringify(payload, null, 2));
+  }, [recent]);
+
   const handleClearRecent = useCallback(() => {
     const ok = window.confirm("Clear all recent test history? This cannot be undone.");
     if (!ok) return;
