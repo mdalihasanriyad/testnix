@@ -106,6 +106,18 @@ function downloadCsv(filename: string, csvText: string) {
   URL.revokeObjectURL(url);
 }
 
+function downloadJson(filename: string, jsonText: string) {
+  const blob = new Blob([jsonText], { type: "application/json;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 export function SpeedTest() {
   const search = useSearch({ from: "/" });
   const [phase, setPhase] = useState<Phase>("idle");
@@ -472,6 +484,19 @@ export function SpeedTest() {
     downloadCsv(`testnix-recent-tests-${date}.csv`, csv);
   }, [recent]);
 
+  const handleExportJsonRecent = useCallback(() => {
+    if (recent.length === 0) return;
+    const payload = recent.map((r) => ({
+      timestamp: new Date(r.at).toISOString(),
+      downloadMbps: Number(r.download.toFixed(2)),
+      uploadMbps: Number(r.upload.toFixed(2)),
+      pingMs: Math.round(r.ping),
+      url: typeof window !== "undefined" ? window.location.origin + buildShareUrl({ download: r.download, upload: r.upload, ping: r.ping }) : "",
+    }));
+    const date = new Date().toISOString().slice(0, 10);
+    downloadJson(`testnix-recent-tests-${date}.json`, JSON.stringify(payload, null, 2));
+  }, [recent]);
+
   const handleClearRecent = useCallback(() => {
     const ok = window.confirm("Clear all recent test history? This cannot be undone.");
     if (!ok) return;
@@ -730,6 +755,18 @@ export function SpeedTest() {
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
                 Export CSV
+              </button>
+              <button
+                type="button"
+                onClick={handleExportJsonRecent}
+                className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Export JSON
               </button>
               <button
                 type="button"
