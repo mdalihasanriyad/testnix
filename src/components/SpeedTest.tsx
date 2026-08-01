@@ -106,6 +106,18 @@ function downloadCsv(filename: string, csvText: string) {
   URL.revokeObjectURL(url);
 }
 
+function downloadJson(filename: string, jsonText: string) {
+  const blob = new Blob([jsonText], { type: "application/json;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 export function SpeedTest() {
   const search = useSearch({ from: "/" });
   const [phase, setPhase] = useState<Phase>("idle");
