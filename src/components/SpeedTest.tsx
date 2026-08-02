@@ -491,7 +491,7 @@ export function SpeedTest() {
       downloadMbps: Number(r.download.toFixed(2)),
       uploadMbps: Number(r.upload.toFixed(2)),
       pingMs: Math.round(r.ping),
-      url: typeof window !== "undefined" ? window.location.origin + buildShareUrl({ download: r.download, upload: r.upload, ping: r.ping }) : "",
+      url: buildShareUrl({ download: r.download, upload: r.upload, ping: r.ping }),
     }));
     const date = new Date().toISOString().slice(0, 10);
     downloadJson(`testnix-recent-tests-${date}.json`, JSON.stringify(payload, null, 2));
