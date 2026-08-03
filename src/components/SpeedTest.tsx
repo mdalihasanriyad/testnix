@@ -434,7 +434,9 @@ export function SpeedTest() {
       }
       return next;
     });
+    setSelectedTest(entry);
   }, [phase, final, upload, pingLoaded]);
+
 
 
 
