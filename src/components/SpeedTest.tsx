@@ -889,16 +889,16 @@ export function SpeedTest() {
         )}
       </div>
 
-      <Dialog
+      <Sheet
         open={selectedTest !== null}
         onOpenChange={(open) => {
           if (!open) setSelectedTest(null);
         }}
       >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Test details</DialogTitle>
-            <DialogDescription>
+        <SheetContent className="sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>Test details</SheetTitle>
+            <SheetDescription>
               {selectedTest && (
                 <time
                   dateTime={new Date(selectedTest.at).toISOString()}
@@ -913,8 +913,8 @@ export function SpeedTest() {
                   })}
                 </time>
               )}
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
           {selectedTest && (
             <div className="mt-2 grid grid-cols-3 gap-4 text-center">
               <div className="rounded-lg border border-neutral-200 p-4">
@@ -940,8 +940,9 @@ export function SpeedTest() {
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
+
     </section>
   );
 }
