@@ -138,6 +138,15 @@ export function SpeedTest() {
   const [loadingRecent, setLoadingRecent] = useState(true);
   const [recentError, setRecentError] = useState(false);
   const [selectedTest, setSelectedTest] = useState<RecentTest | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all");
+  const [minDownload, setMinDownload] = useState("");
+  const [maxDownload, setMaxDownload] = useState("");
+  const [minUpload, setMinUpload] = useState("");
+  const [maxUpload, setMaxUpload] = useState("");
+  const [minPing, setMinPing] = useState("");
+  const [maxPing, setMaxPing] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const savedRunIdRef = useRef<number | null>(null);
   const fromSharedRef = useRef(false);
   const startedRef = useRef(false);
