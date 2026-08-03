@@ -138,6 +138,15 @@ export function SpeedTest() {
   const [loadingRecent, setLoadingRecent] = useState(true);
   const [recentError, setRecentError] = useState(false);
   const [selectedTest, setSelectedTest] = useState<RecentTest | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all");
+  const [minDownload, setMinDownload] = useState("");
+  const [maxDownload, setMaxDownload] = useState("");
+  const [minUpload, setMinUpload] = useState("");
+  const [maxUpload, setMaxUpload] = useState("");
+  const [minPing, setMinPing] = useState("");
+  const [maxPing, setMaxPing] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const savedRunIdRef = useRef<number | null>(null);
   const fromSharedRef = useRef(false);
   const startedRef = useRef(false);
@@ -527,6 +536,55 @@ export function SpeedTest() {
     fetchRecent();
   }, [fetchRecent]);
 
+  const filteredRecent = recent.filter((r) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      const text = `${formatSpeed(r.download)} ${formatSpeed(r.upload)} ${Math.round(r.ping)} ${new Date(r.at).toLocaleString()}`.toLowerCase();
+      if (!text.includes(q)) return false;
+    }
+    if (dateFilter !== "all") {
+      const now = new Date();
+      const d = new Date(r.at);
+      const sameDay = d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      if (dateFilter === "today" && !sameDay) return false;
+      const diffDays = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
+      if (dateFilter === "week" && diffDays > 7) return false;
+      if (dateFilter === "month" && diffDays > 30) return false;
+    }
+    const minD = parseFloat(minDownload);
+    const maxD = parseFloat(maxDownload);
+    if (!isNaN(minD) && r.download < minD) return false;
+    if (!isNaN(maxD) && r.download > maxD) return false;
+    const minU = parseFloat(minUpload);
+    const maxU = parseFloat(maxUpload);
+    if (!isNaN(minU) && r.upload < minU) return false;
+    if (!isNaN(maxU) && r.upload > maxU) return false;
+    const minP = parseFloat(minPing);
+    const maxP = parseFloat(maxPing);
+    if (!isNaN(minP) && r.ping < minP) return false;
+    if (!isNaN(maxP) && r.ping > maxP) return false;
+    return true;
+  });
+
+  const activeFilterCount = [
+    searchQuery.trim(),
+    dateFilter !== "all",
+    minDownload || maxDownload,
+    minUpload || maxUpload,
+    minPing || maxPing,
+  ].filter(Boolean).length;
+
+  const handleResetFilters = useCallback(() => {
+    setSearchQuery("");
+    setDateFilter("all");
+    setMinDownload("");
+    setMaxDownload("");
+    setMinUpload("");
+    setMaxUpload("");
+    setMinPing("");
+    setMaxPing("");
+  }, []);
+
   const showReload = phase === "done" && !extrasRunning;
 
   return (
@@ -741,54 +799,190 @@ export function SpeedTest() {
       )}
 
       <div className="mt-12 w-full max-w-3xl animate-fade-in">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-left text-lg font-bold text-neutral-900">
             Recent tests
           </h3>
-          {recent.length > 0 && !loadingRecent && (
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                type="button"
-                onClick={handleExportRecent}
-                className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                Export CSV
-              </button>
-              <button
-                type="button"
-                onClick={handleExportJsonRecent}
-                className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                Export JSON
-              </button>
-              <button
-                type="button"
-                onClick={handleClearRecent}
-                className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M3 6h18" />
-                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                  <path d="M10 11v6" />
-                  <path d="M14 11v6" />
-                </svg>
-                <span className="hidden sm:inline">Clear recent history</span>
-                <span className="sm:hidden">Clear</span>
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {recent.length > 0 && !loadingRecent && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowFilters((s) => !s)}
+                  className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition ${showFilters ? "border-neutral-900 bg-neutral-900 text-white hover:bg-neutral-800" : "border-neutral-200 text-neutral-600 hover:border-neutral-900 hover:text-neutral-900"}`}
+                  aria-expanded={showFilters}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                  </svg>
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <span className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--testnix-red)] text-[10px] font-bold text-white">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportRecent}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Export CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportJsonRecent}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Export JSON
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearRecent}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                  </svg>
+                  <span className="hidden sm:inline">Clear recent history</span>
+                  <span className="sm:hidden">Clear</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
+
+        {showFilters && (
+          <div className="mb-4 rounded-md border border-neutral-200 bg-white p-4 text-left animate-fade-in">
+            <div className="mb-3 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-neutral-400">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search speed, ping, or date…"
+                className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-neutral-500">Date</label>
+                <select
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value as "all" | "today" | "week" | "month")}
+                  className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
+                >
+                  <option value="all">All time</option>
+                  <option value="today">Today</option>
+                  <option value="week">Last 7 days</option>
+                  <option value="month">Last 30 days</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-neutral-500">Download (Mbps)</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={minDownload}
+                    onChange={(e) => setMinDownload(e.target.value)}
+                    placeholder="Min"
+                    className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
+                  />
+                  <span className="text-neutral-400">-</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={maxDownload}
+                    onChange={(e) => setMaxDownload(e.target.value)}
+                    placeholder="Max"
+                    className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-neutral-500">Upload (Mbps)</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={minUpload}
+                    onChange={(e) => setMinUpload(e.target.value)}
+                    placeholder="Min"
+                    className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
+                  />
+                  <span className="text-neutral-400">-</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={maxUpload}
+                    onChange={(e) => setMaxUpload(e.target.value)}
+                    placeholder="Max"
+                    className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-neutral-500">Ping (ms)</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={minPing}
+                    onChange={(e) => setMinPing(e.target.value)}
+                    placeholder="Min"
+                    className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
+                  />
+                  <span className="text-neutral-400">-</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={maxPing}
+                    onChange={(e) => setMaxPing(e.target.value)}
+                    placeholder="Max"
+                    className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+            {activeFilterCount > 0 && (
+              <div className="mt-3 flex items-center justify-between border-t border-neutral-100 pt-3">
+                <span className="text-xs text-neutral-500">{filteredRecent.length} result{filteredRecent.length === 1 ? "" : "s"}</span>
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="text-xs font-medium text-neutral-600 transition hover:text-neutral-900"
+                >
+                  Reset filters
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {recentError ? (
           <div className="rounded-md border border-neutral-200 px-4 py-8 text-center">
             <p className="text-sm text-neutral-600">
@@ -839,9 +1033,9 @@ export function SpeedTest() {
               </li>
             ))}
           </ul>
-        ) : recent.length > 0 ? (
+        ) : filteredRecent.length > 0 ? (
           <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
-            {recent.map((r) => (
+            {filteredRecent.map((r) => (
               <li
                 key={r.id}
                 role="button"
@@ -884,7 +1078,7 @@ export function SpeedTest() {
           </ul>
         ) : (
           <div className="rounded-md border border-neutral-200 px-4 py-8 text-center text-sm text-neutral-500">
-            No completed tests yet. Run a test to see your recent results here.
+            {recent.length > 0 ? "No tests match your filters. Try adjusting or reset filters." : "No completed tests yet. Run a test to see your recent results here."}
           </div>
         )}
       </div>
