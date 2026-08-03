@@ -490,15 +490,15 @@ export function SpeedTest() {
   }, [final, upload, pingLoaded]);
 
   const handleExportRecent = useCallback(() => {
-    if (recent.length === 0) return;
-    const csv = buildRecentCsv(recent);
+    if (filteredRecent.length === 0) return;
+    const csv = buildRecentCsv(filteredRecent);
     const date = new Date().toISOString().slice(0, 10);
     downloadCsv(`testnix-recent-tests-${date}.csv`, csv);
-  }, [recent]);
+  }, [filteredRecent]);
 
   const handleExportJsonRecent = useCallback(() => {
-    if (recent.length === 0) return;
-    const payload = recent.map((r) => ({
+    if (filteredRecent.length === 0) return;
+    const payload = filteredRecent.map((r) => ({
       timestamp: new Date(r.at).toISOString(),
       downloadMbps: Number(r.download.toFixed(2)),
       uploadMbps: Number(r.upload.toFixed(2)),
@@ -507,7 +507,7 @@ export function SpeedTest() {
     }));
     const date = new Date().toISOString().slice(0, 10);
     downloadJson(`testnix-recent-tests-${date}.json`, JSON.stringify(payload, null, 2));
-  }, [recent]);
+  }, [filteredRecent]);
 
   const handleClearRecent = useCallback(() => {
     const ok = window.confirm("Clear all recent test history? This cannot be undone.");
