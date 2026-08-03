@@ -536,7 +536,54 @@ export function SpeedTest() {
     fetchRecent();
   }, [fetchRecent]);
 
-  const showReload = phase === "done" && !extrasRunning;
+  const filteredRecent = recent.filter((r) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      const text = `${formatSpeed(r.download)} ${formatSpeed(r.upload)} ${Math.round(r.ping)} ${new Date(r.at).toLocaleString()}`.toLowerCase();
+      if (!text.includes(q)) return false;
+    }
+    if (dateFilter !== "all") {
+      const now = new Date();
+      const d = new Date(r.at);
+      const sameDay = d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      if (dateFilter === "today" && !sameDay) return false;
+      const diffDays = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
+      if (dateFilter === "week" && diffDays > 7) return false;
+      if (dateFilter === "month" && diffDays > 30) return false;
+    }
+    const minD = parseFloat(minDownload);
+    const maxD = parseFloat(maxDownload);
+    if (!isNaN(minD) && r.download < minD) return false;
+    if (!isNaN(maxD) && r.download > maxD) return false;
+    const minU = parseFloat(minUpload);
+    const maxU = parseFloat(maxUpload);
+    if (!isNaN(minU) && r.upload < minU) return false;
+    if (!isNaN(maxU) && r.upload > maxU) return false;
+    const minP = parseFloat(minPing);
+    const maxP = parseFloat(maxPing);
+    if (!isNaN(minP) && r.ping < minP) return false;
+    if (!isNaN(maxP) && r.ping > maxP) return false;
+    return true;
+  });
+
+  const activeFilterCount = [
+    searchQuery.trim(),
+    dateFilter !== "all",
+    minDownload || maxDownload,
+    minUpload || maxUpload,
+    minPing || maxPing,
+  ].filter(Boolean).length;
+
+  const handleResetFilters = useCallback(() => {
+    setSearchQuery("");
+    setDateFilter("all");
+    setMinDownload("");
+    setMaxDownload("");
+    setMinUpload("");
+    setMaxUpload("");
+    setMinPing("");
+    setMaxPing("");
+  }, []);
 
   return (
     <section className="flex w-full max-w-5xl flex-col items-center px-4 text-center sm:px-6">
