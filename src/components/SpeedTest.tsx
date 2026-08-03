@@ -886,7 +886,7 @@ export function SpeedTest() {
                 <label className="mb-1 block text-xs font-medium text-neutral-500">Date</label>
                 <select
                   value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value as RecentTest["dateFilter"])}
+                  onChange={(e) => setDateFilter(e.target.value as "all" | "today" | "week" | "month")}
                   className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
                 >
                   <option value="all">All time</option>
