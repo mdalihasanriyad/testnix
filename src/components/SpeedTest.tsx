@@ -849,7 +849,7 @@ export function SpeedTest() {
                   <option value="highestUpload">Highest upload</option>
                   <option value="lowestPing">Lowest ping</option>
                 </select>
-                  type="button"
+                <button
                   onClick={handleExportRecent}
                   className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
                 >
