@@ -148,6 +148,8 @@ export function SpeedTest() {
   const [maxPing, setMaxPing] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<"newest" | "highestDownload" | "highestUpload" | "lowestPing">("newest");
+  const [viewMode, setViewMode] = useState<"list" | "chart">("list");
+  const [ChartComponent, setChartComponent] = useState<React.ComponentType<{ data: { at: number; label: string; download: number; upload: number; ping: number }[] }> | null>(null);
   const savedRunIdRef = useRef<number | null>(null);
   const fromSharedRef = useRef(false);
   const startedRef = useRef(false);
