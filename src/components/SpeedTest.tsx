@@ -1059,9 +1059,9 @@ export function SpeedTest() {
               </li>
             ))}
           </ul>
-        ) : filteredRecent.length > 0 ? (
+        ) : sortedRecent.length > 0 ? (
           <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
-            {filteredRecent.map((r) => (
+            {sortedRecent.map((r) => (
               <li
                 key={r.id}
                 role="button"
