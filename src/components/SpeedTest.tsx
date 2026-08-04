@@ -867,6 +867,24 @@ export function SpeedTest() {
                   <option value="highestUpload">Highest upload</option>
                   <option value="lowestPing">Lowest ping</option>
                 </select>
+                <div className="inline-flex rounded-md border border-neutral-200 bg-white text-xs font-medium" role="group" aria-label="Recent tests view">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("list")}
+                    className={`px-2.5 py-1.5 transition ${viewMode === "list" ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-50"}`}
+                    aria-pressed={viewMode === "list"}
+                  >
+                    List
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("chart")}
+                    className={`px-2.5 py-1.5 transition ${viewMode === "chart" ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-50"}`}
+                    aria-pressed={viewMode === "chart"}
+                  >
+                    Chart
+                  </button>
+                </div>
                 <button
                   onClick={handleExportRecent}
                   className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
