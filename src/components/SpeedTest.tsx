@@ -567,7 +567,20 @@ export function SpeedTest() {
     return true;
   });
 
-  const activeFilterCount = [
+  const sortedRecent = [...filteredRecent].sort((a, b) => {
+    switch (sortBy) {
+      case "newest":
+        return b.at - a.at;
+      case "highestDownload":
+        return b.download - a.download;
+      case "highestUpload":
+        return b.upload - a.upload;
+      case "lowestPing":
+        return a.ping - b.ping;
+      default:
+        return 0;
+    }
+  });
     searchQuery.trim(),
     dateFilter !== "all",
     minDownload || maxDownload,
