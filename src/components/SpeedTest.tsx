@@ -581,6 +581,8 @@ export function SpeedTest() {
         return 0;
     }
   });
+
+  const activeFilterCount = [
     searchQuery.trim(),
     dateFilter !== "all",
     minDownload || maxDownload,
