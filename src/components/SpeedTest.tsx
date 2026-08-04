@@ -1,5 +1,5 @@
 import { useSearch } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -148,6 +148,8 @@ export function SpeedTest() {
   const [maxPing, setMaxPing] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<"newest" | "highestDownload" | "highestUpload" | "lowestPing">("newest");
+  const [viewMode, setViewMode] = useState<"list" | "chart">("list");
+  const [ChartComponent, setChartComponent] = useState<React.ComponentType<{ data: { at: number; label: string; download: number; upload: number; ping: number }[] }> | null>(null);
   const savedRunIdRef = useRef<number | null>(null);
   const fromSharedRef = useRef(false);
   const startedRef = useRef(false);
@@ -446,6 +448,22 @@ export function SpeedTest() {
     });
     setSelectedTest(entry);
   }, [phase, final, upload, pingLoaded]);
+
+  // Dynamically import the chart component only on the client to avoid SSR issues.
+  useEffect(() => {
+    let mounted = true;
+    import("./SpeedTrendChart")
+      .then((mod) => {
+        if (mounted) setChartComponent(() => mod.SpeedTrendChart);
+      })
+      .catch(() => {
+        // ignore failed import
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
 
 
 
@@ -849,6 +867,24 @@ export function SpeedTest() {
                   <option value="highestUpload">Highest upload</option>
                   <option value="lowestPing">Lowest ping</option>
                 </select>
+                <div className="inline-flex rounded-md border border-neutral-200 bg-white text-xs font-medium" role="group" aria-label="Recent tests view">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("list")}
+                    className={`px-2.5 py-1.5 transition ${viewMode === "list" ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-50"}`}
+                    aria-pressed={viewMode === "list"}
+                  >
+                    List
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("chart")}
+                    className={`px-2.5 py-1.5 transition ${viewMode === "chart" ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-50"}`}
+                    aria-pressed={viewMode === "chart"}
+                  >
+                    Chart
+                  </button>
+                </div>
                 <button
                   onClick={handleExportRecent}
                   className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
@@ -1042,66 +1078,90 @@ export function SpeedTest() {
             </button>
           </div>
         ) : loadingRecent ? (
-          <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <li
-                key={i}
-                className="grid grid-cols-[1.5fr_1fr_1fr_1fr] items-center gap-2 px-4 py-3"
-                aria-hidden="true"
-              >
-                <div className="flex flex-col gap-1.5">
-                  <span className="skeleton h-3.5 w-16 rounded" />
-                  <span className="skeleton h-3 w-24 rounded" />
-                </div>
-                <span className="skeleton h-4 w-16 rounded" />
-                <span className="skeleton h-4 w-16 rounded" />
-                <span className="skeleton h-4 w-12 rounded" />
-              </li>
-            ))}
-          </ul>
+          viewMode === "chart" ? (
+            <div className="rounded-md border border-neutral-200 px-4 py-8">
+              <div className="skeleton h-64 w-full rounded" />
+            </div>
+          ) : (
+            <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <li
+                  key={i}
+                  className="grid grid-cols-[1.5fr_1fr_1fr_1fr] items-center gap-2 px-4 py-3"
+                  aria-hidden="true"
+                >
+                  <div className="flex flex-col gap-1.5">
+                    <span className="skeleton h-3.5 w-16 rounded" />
+                    <span className="skeleton h-3 w-24 rounded" />
+                  </div>
+                  <span className="skeleton h-4 w-16 rounded" />
+                  <span className="skeleton h-4 w-16 rounded" />
+                  <span className="skeleton h-4 w-12 rounded" />
+                </li>
+              ))}
+            </ul>
+          )
         ) : sortedRecent.length > 0 ? (
-          <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
-            {sortedRecent.map((r) => (
-              <li
-                key={r.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => setSelectedTest(r)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setSelectedTest(r);
-                  }
-                }}
-                className="grid cursor-pointer grid-cols-[1.5fr_1fr_1fr_1fr] items-baseline gap-2 px-4 py-3 text-left text-sm transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-              >
-                <div className="flex flex-col">
-                  <span className="text-xs text-neutral-500">
-                    {formatWhen(r.at)}
+          viewMode === "chart" ? (
+            <div className="rounded-md border border-neutral-200 bg-white p-4 animate-fade-in">
+              {ChartComponent ? (
+                <ChartComponent
+                  data={sortedRecent.map((r) => ({
+                    at: r.at,
+                    label: formatTimestamp(r.at),
+                    download: Number(r.download.toFixed(2)),
+                    upload: Number(r.upload.toFixed(2)),
+                    ping: Math.round(r.ping),
+                  }))}
+                />
+              ) : (
+                <div className="skeleton h-64 w-full rounded" />
+              )}
+            </div>
+          ) : (
+            <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
+              {sortedRecent.map((r) => (
+                <li
+                  key={r.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedTest(r)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedTest(r);
+                    }
+                  }}
+                  className="grid cursor-pointer grid-cols-[1.5fr_1fr_1fr_1fr] items-baseline gap-2 px-4 py-3 text-left text-sm transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                >
+                  <div className="flex flex-col">
+                    <span className="text-xs text-neutral-500">
+                      {formatWhen(r.at)}
+                    </span>
+                    <time
+                      className="text-[10px] text-neutral-400"
+                      dateTime={new Date(r.at).toISOString()}
+                      title={new Date(r.at).toLocaleString()}
+                    >
+                      {formatTimestamp(r.at)}
+                    </time>
+                  </div>
+                  <span className="tabular-nums text-neutral-900">
+                    <span className="font-semibold">{formatSpeed(r.download)}</span>
+                    <span className="ml-1 text-xs text-neutral-400">↓ Mbps</span>
                   </span>
-                  <time
-                    className="text-[10px] text-neutral-400"
-                    dateTime={new Date(r.at).toISOString()}
-                    title={new Date(r.at).toLocaleString()}
-                  >
-                    {formatTimestamp(r.at)}
-                  </time>
-                </div>
-                <span className="tabular-nums text-neutral-900">
-                  <span className="font-semibold">{formatSpeed(r.download)}</span>
-                  <span className="ml-1 text-xs text-neutral-400">↓ Mbps</span>
-                </span>
-                <span className="tabular-nums text-neutral-900">
-                  <span className="font-semibold">{formatSpeed(r.upload)}</span>
-                  <span className="ml-1 text-xs text-neutral-400">↑ Mbps</span>
-                </span>
-                <span className="tabular-nums text-neutral-900">
-                  <span className="font-semibold">{Math.round(r.ping)}</span>
-                  <span className="ml-1 text-xs text-neutral-400">ms</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+                  <span className="tabular-nums text-neutral-900">
+                    <span className="font-semibold">{formatSpeed(r.upload)}</span>
+                    <span className="ml-1 text-xs text-neutral-400">↑ Mbps</span>
+                  </span>
+                  <span className="tabular-nums text-neutral-900">
+                    <span className="font-semibold">{Math.round(r.ping)}</span>
+                    <span className="ml-1 text-xs text-neutral-400">ms</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )
         ) : (
           <div className="rounded-md border border-neutral-200 px-4 py-8 text-center text-sm text-neutral-500">
             {recent.length > 0 ? "No tests match your filters. Try adjusting or reset filters." : "No completed tests yet. Run a test to see your recent results here."}
