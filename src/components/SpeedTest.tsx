@@ -147,6 +147,7 @@ export function SpeedTest() {
   const [minPing, setMinPing] = useState("");
   const [maxPing, setMaxPing] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<"newest" | "highestDownload" | "highestUpload" | "lowestPing">("newest");
   const savedRunIdRef = useRef<number | null>(null);
   const fromSharedRef = useRef(false);
   const startedRef = useRef(false);
@@ -566,6 +567,21 @@ export function SpeedTest() {
     return true;
   });
 
+  const sortedRecent = [...filteredRecent].sort((a, b) => {
+    switch (sortBy) {
+      case "newest":
+        return b.at - a.at;
+      case "highestDownload":
+        return b.download - a.download;
+      case "highestUpload":
+        return b.upload - a.upload;
+      case "lowestPing":
+        return a.ping - b.ping;
+      default:
+        return 0;
+    }
+  });
+
   const activeFilterCount = [
     searchQuery.trim(),
     dateFilter !== "all",
@@ -822,8 +838,18 @@ export function SpeedTest() {
                     </span>
                   )}
                 </button>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  className="rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-600 focus:border-neutral-900 focus:outline-none"
+                  aria-label="Sort recent tests"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="highestDownload">Highest download</option>
+                  <option value="highestUpload">Highest upload</option>
+                  <option value="lowestPing">Lowest ping</option>
+                </select>
                 <button
-                  type="button"
                   onClick={handleExportRecent}
                   className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
                 >
@@ -970,7 +996,7 @@ export function SpeedTest() {
             </div>
             {activeFilterCount > 0 && (
               <div className="mt-3 flex items-center justify-between border-t border-neutral-100 pt-3">
-                <span className="text-xs text-neutral-500">{filteredRecent.length} result{filteredRecent.length === 1 ? "" : "s"}</span>
+                <span className="text-xs text-neutral-500">{sortedRecent.length} result{sortedRecent.length === 1 ? "" : "s"}</span>
                 <button
                   type="button"
                   onClick={handleResetFilters}
@@ -1033,9 +1059,9 @@ export function SpeedTest() {
               </li>
             ))}
           </ul>
-        ) : filteredRecent.length > 0 ? (
+        ) : sortedRecent.length > 0 ? (
           <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
-            {filteredRecent.map((r) => (
+            {sortedRecent.map((r) => (
               <li
                 key={r.id}
                 role="button"
