@@ -147,6 +147,7 @@ export function SpeedTest() {
   const [minPing, setMinPing] = useState("");
   const [maxPing, setMaxPing] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<"newest" | "highestDownload" | "highestUpload" | "lowestPing">("newest");
   const savedRunIdRef = useRef<number | null>(null);
   const fromSharedRef = useRef(false);
   const startedRef = useRef(false);
