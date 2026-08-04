@@ -996,7 +996,7 @@ export function SpeedTest() {
             </div>
             {activeFilterCount > 0 && (
               <div className="mt-3 flex items-center justify-between border-t border-neutral-100 pt-3">
-                <span className="text-xs text-neutral-500">{filteredRecent.length} result{filteredRecent.length === 1 ? "" : "s"}</span>
+                <span className="text-xs text-neutral-500">{sortedRecent.length} result{sortedRecent.length === 1 ? "" : "s"}</span>
                 <button
                   type="button"
                   onClick={handleResetFilters}
