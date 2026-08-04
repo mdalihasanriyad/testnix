@@ -838,7 +838,17 @@ export function SpeedTest() {
                     </span>
                   )}
                 </button>
-                <button
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  className="rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-600 focus:border-neutral-900 focus:outline-none"
+                  aria-label="Sort recent tests"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="highestDownload">Highest download</option>
+                  <option value="highestUpload">Highest upload</option>
+                  <option value="lowestPing">Lowest ping</option>
+                </select>
                   type="button"
                   onClick={handleExportRecent}
                   className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
