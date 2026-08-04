@@ -67,11 +67,14 @@ export function SpeedTrendChart({ data }: { data: ChartTestPoint[] }) {
               boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
               fontSize: 12,
             }}
-            formatter={(value: number, name: string) => {
-              if (name === "Ping") return [`${value} ms`, name];
-              return [`${value} Mbps`, name];
-            }}
-            labelFormatter={(label: string) => label}
+          formatter={(
+            value: number | string | Array<number | string>,
+            name: string | number,
+          ) => {
+            if (name === "Ping") return [`${value} ms`, name];
+            return [`${value} Mbps`, name];
+          }}
+          labelFormatter={(label: string | number) => label}
           />
           <Legend wrapperStyle={{ fontSize: 12, paddingTop: 16 }} />
           <Line
