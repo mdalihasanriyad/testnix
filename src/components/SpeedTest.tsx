@@ -449,6 +449,22 @@ export function SpeedTest() {
     setSelectedTest(entry);
   }, [phase, final, upload, pingLoaded]);
 
+  // Dynamically import the chart component only on the client to avoid SSR issues.
+  useEffect(() => {
+    let mounted = true;
+    import("./SpeedTrendChart")
+      .then((mod) => {
+        if (mounted) setChartComponent(() => mod.SpeedTrendChart);
+      })
+      .catch(() => {
+        // ignore failed import
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+
 
 
 
