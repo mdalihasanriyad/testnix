@@ -648,13 +648,13 @@ export function SpeedTest() {
   }, [chartRecent]);
 
   const activeFilterCount = [
-
     searchQuery.trim(),
     dateFilter !== "all",
     minDownload || maxDownload,
     minUpload || maxUpload,
     minPing || maxPing,
   ].filter(Boolean).length;
+
 
   const handleResetFilters = useCallback(() => {
     setSearchQuery("");
