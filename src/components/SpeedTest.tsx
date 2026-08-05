@@ -84,6 +84,17 @@ function escapeCsv(value: string | number) {
   return str;
 }
 
+function buildRecentCsv(rows: RecentTest[]) {
+  const header = ["Timestamp", "Download (Mbps)", "Upload (Mbps)", "Ping (ms)"];
+  const lines = rows.map((r) => [
+    new Date(r.at).toISOString(),
+    r.download.toFixed(2),
+    r.upload.toFixed(2),
+    Math.round(r.ping),
+  ]);
+  return [header, ...lines].map((row) => row.map(escapeCsv).join(",")).join("\n");
+}
+
 function buildChartCsv(rows: RecentTest[]) {
   const header = ["Timestamp", "Time", "Download (Mbps)", "Upload (Mbps)", "Ping (ms)"];
   const lines = rows.map((r) => [
@@ -95,6 +106,7 @@ function buildChartCsv(rows: RecentTest[]) {
   ]);
   return [header, ...lines].map((row) => row.map(escapeCsv).join(",")).join("\n");
 }
+
 
 
 function downloadCsv(filename: string, csvText: string) {
