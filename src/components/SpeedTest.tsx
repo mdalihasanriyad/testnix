@@ -1128,9 +1128,56 @@ export function SpeedTest() {
         ) : sortedRecent.length > 0 ? (
           viewMode === "chart" ? (
             <div className="rounded-md border border-neutral-200 bg-white p-4 animate-fade-in">
-              {ChartComponent ? (
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <div className="inline-flex rounded-md border border-neutral-200 text-xs font-medium" role="group" aria-label="Chart time range">
+                  {([
+                    ["all", "All"],
+                    ["7d", "Last 7 days"],
+                    ["30d", "Last 30 days"],
+                    ["custom", "Custom"],
+                  ] as const).map(([val, label]) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setChartRange(val)}
+                      aria-pressed={chartRange === val}
+                      className={`px-2.5 py-1.5 transition ${chartRange === val ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-50"}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {chartRange === "custom" && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="flex items-center gap-1 text-xs text-neutral-500">
+                      From
+                      <input
+                        type="date"
+                        value={chartFrom}
+                        onChange={(e) => setChartFrom(e.target.value)}
+                        className="rounded-md border border-neutral-200 px-2 py-1 text-xs text-neutral-700 focus:border-neutral-900 focus:outline-none"
+                      />
+                    </label>
+                    <label className="flex items-center gap-1 text-xs text-neutral-500">
+                      To
+                      <input
+                        type="date"
+                        value={chartTo}
+                        onChange={(e) => setChartTo(e.target.value)}
+                        className="rounded-md border border-neutral-200 px-2 py-1 text-xs text-neutral-700 focus:border-neutral-900 focus:outline-none"
+                      />
+                    </label>
+                  </div>
+                )}
+                <span className="ml-auto text-xs text-neutral-500">
+                  {chartRecent.length} point{chartRecent.length === 1 ? "" : "s"}
+                </span>
+              </div>
+              {!ChartComponent ? (
+                <div className="skeleton h-64 w-full rounded" />
+              ) : chartRecent.length > 0 ? (
                 <ChartComponent
-                  data={sortedRecent.map((r) => ({
+                  data={chartRecent.map((r) => ({
                     at: r.at,
                     label: formatTimestamp(r.at),
                     download: Number(r.download.toFixed(2)),
@@ -1139,7 +1186,7 @@ export function SpeedTest() {
                   }))}
                 />
               ) : (
-                <div className="skeleton h-64 w-full rounded" />
+                <p className="py-12 text-center text-sm text-neutral-500">No tests in this time range.</p>
               )}
             </div>
           ) : (
