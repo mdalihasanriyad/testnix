@@ -545,6 +545,13 @@ export function SpeedTest() {
     downloadJson(`testnix-recent-tests-${date}.json`, JSON.stringify(payload, null, 2));
   }, [recent]);
 
+  const handleExportChartCsv = useCallback(() => {
+    if (chartRecent.length === 0) return;
+    const csv = buildChartCsv(chartRecent);
+    const date = new Date().toISOString().slice(0, 10);
+    downloadCsv(`testnix-trend-chart-${date}.csv`, csv);
+  }, [chartRecent]);
+
   const handleClearRecent = useCallback(() => {
     const ok = window.confirm("Clear all recent test history? This cannot be undone.");
     if (!ok) return;
@@ -555,6 +562,7 @@ export function SpeedTest() {
     }
     setRecent([]);
   }, []);
+
 
   const fetchRecent = useCallback(() => {
     setLoadingRecent(true);
