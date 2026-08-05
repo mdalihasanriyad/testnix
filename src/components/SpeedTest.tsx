@@ -149,6 +149,9 @@ export function SpeedTest() {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<"newest" | "highestDownload" | "highestUpload" | "lowestPing">("newest");
   const [viewMode, setViewMode] = useState<"list" | "chart">("list");
+  const [chartRange, setChartRange] = useState<"all" | "7d" | "30d" | "custom">("all");
+  const [chartFrom, setChartFrom] = useState("");
+  const [chartTo, setChartTo] = useState("");
   const [ChartComponent, setChartComponent] = useState<React.ComponentType<{ data: { at: number; label: string; download: number; upload: number; ping: number }[] }> | null>(null);
   const savedRunIdRef = useRef<number | null>(null);
   const fromSharedRef = useRef(false);
@@ -599,6 +602,27 @@ export function SpeedTest() {
         return 0;
     }
   });
+
+  // Chart-only time range filtering (independent of the list filters)
+  const chartRecent = [...filteredRecent]
+    .filter((r) => {
+      const now = Date.now();
+      const day = 24 * 60 * 60 * 1000;
+      if (chartRange === "7d") return now - r.at <= 7 * day;
+      if (chartRange === "30d") return now - r.at <= 30 * day;
+      if (chartRange === "custom") {
+        if (chartFrom) {
+          const from = new Date(`${chartFrom}T00:00:00`).getTime();
+          if (!isNaN(from) && r.at < from) return false;
+        }
+        if (chartTo) {
+          const to = new Date(`${chartTo}T23:59:59.999`).getTime();
+          if (!isNaN(to) && r.at > to) return false;
+        }
+      }
+      return true;
+    })
+    .sort((a, b) => a.at - b.at);
 
   const activeFilterCount = [
     searchQuery.trim(),
@@ -1104,9 +1128,56 @@ export function SpeedTest() {
         ) : sortedRecent.length > 0 ? (
           viewMode === "chart" ? (
             <div className="rounded-md border border-neutral-200 bg-white p-4 animate-fade-in">
-              {ChartComponent ? (
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <div className="inline-flex rounded-md border border-neutral-200 text-xs font-medium" role="group" aria-label="Chart time range">
+                  {([
+                    ["all", "All"],
+                    ["7d", "Last 7 days"],
+                    ["30d", "Last 30 days"],
+                    ["custom", "Custom"],
+                  ] as const).map(([val, label]) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setChartRange(val)}
+                      aria-pressed={chartRange === val}
+                      className={`px-2.5 py-1.5 transition ${chartRange === val ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-50"}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {chartRange === "custom" && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="flex items-center gap-1 text-xs text-neutral-500">
+                      From
+                      <input
+                        type="date"
+                        value={chartFrom}
+                        onChange={(e) => setChartFrom(e.target.value)}
+                        className="rounded-md border border-neutral-200 px-2 py-1 text-xs text-neutral-700 focus:border-neutral-900 focus:outline-none"
+                      />
+                    </label>
+                    <label className="flex items-center gap-1 text-xs text-neutral-500">
+                      To
+                      <input
+                        type="date"
+                        value={chartTo}
+                        onChange={(e) => setChartTo(e.target.value)}
+                        className="rounded-md border border-neutral-200 px-2 py-1 text-xs text-neutral-700 focus:border-neutral-900 focus:outline-none"
+                      />
+                    </label>
+                  </div>
+                )}
+                <span className="ml-auto text-xs text-neutral-500">
+                  {chartRecent.length} point{chartRecent.length === 1 ? "" : "s"}
+                </span>
+              </div>
+              {!ChartComponent ? (
+                <div className="skeleton h-64 w-full rounded" />
+              ) : chartRecent.length > 0 ? (
                 <ChartComponent
-                  data={sortedRecent.map((r) => ({
+                  data={chartRecent.map((r) => ({
                     at: r.at,
                     label: formatTimestamp(r.at),
                     download: Number(r.download.toFixed(2)),
@@ -1115,7 +1186,7 @@ export function SpeedTest() {
                   }))}
                 />
               ) : (
-                <div className="skeleton h-64 w-full rounded" />
+                <p className="py-12 text-center text-sm text-neutral-500">No tests in this time range.</p>
               )}
             </div>
           ) : (
