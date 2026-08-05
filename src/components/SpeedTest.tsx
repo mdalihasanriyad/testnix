@@ -640,7 +640,15 @@ export function SpeedTest() {
     })
     .sort((a, b) => a.at - b.at);
 
+  const handleExportChartCsv = useCallback(() => {
+    if (chartRecent.length === 0) return;
+    const csv = buildChartCsv(chartRecent);
+    const date = new Date().toISOString().slice(0, 10);
+    downloadCsv(`testnix-trend-chart-${date}.csv`, csv);
+  }, [chartRecent]);
+
   const activeFilterCount = [
+
     searchQuery.trim(),
     dateFilter !== "all",
     minDownload || maxDownload,
