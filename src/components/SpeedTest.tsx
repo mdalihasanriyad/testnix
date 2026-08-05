@@ -600,6 +600,27 @@ export function SpeedTest() {
     }
   });
 
+  // Chart-only time range filtering (independent of the list filters)
+  const chartRecent = [...filteredRecent]
+    .filter((r) => {
+      const now = Date.now();
+      const day = 24 * 60 * 60 * 1000;
+      if (chartRange === "7d") return now - r.at <= 7 * day;
+      if (chartRange === "30d") return now - r.at <= 30 * day;
+      if (chartRange === "custom") {
+        if (chartFrom) {
+          const from = new Date(`${chartFrom}T00:00:00`).getTime();
+          if (!isNaN(from) && r.at < from) return false;
+        }
+        if (chartTo) {
+          const to = new Date(`${chartTo}T23:59:59.999`).getTime();
+          if (!isNaN(to) && r.at > to) return false;
+        }
+      }
+      return true;
+    })
+    .sort((a, b) => a.at - b.at);
+
   const activeFilterCount = [
     searchQuery.trim(),
     dateFilter !== "all",
