@@ -84,16 +84,18 @@ function escapeCsv(value: string | number) {
   return str;
 }
 
-function buildRecentCsv(rows: RecentTest[]) {
-  const header = ["Timestamp", "Download (Mbps)", "Upload (Mbps)", "Ping (ms)"];
+function buildChartCsv(rows: RecentTest[]) {
+  const header = ["Timestamp", "Time", "Download (Mbps)", "Upload (Mbps)", "Ping (ms)"];
   const lines = rows.map((r) => [
     new Date(r.at).toISOString(),
+    formatTimestamp(r.at),
     r.download.toFixed(2),
     r.upload.toFixed(2),
     Math.round(r.ping),
   ]);
   return [header, ...lines].map((row) => row.map(escapeCsv).join(",")).join("\n");
 }
+
 
 function downloadCsv(filename: string, csvText: string) {
   const blob = new Blob(["\uFEFF" + csvText], { type: "text/csv;charset=utf-8;" });
