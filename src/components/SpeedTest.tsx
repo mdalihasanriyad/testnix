@@ -666,6 +666,8 @@ export function SpeedTest() {
     })
     .sort((a, b) => a.at - b.at);
 
+  const stats = computeStats(chartRecent);
+
   const handleExportChartCsv = useCallback(() => {
     if (chartRecent.length === 0) return;
     const csv = buildChartCsv(chartRecent);
