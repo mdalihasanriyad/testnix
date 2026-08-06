@@ -133,8 +133,7 @@ function computeStats(rows: RecentTest[]) {
   };
 }
 
-
-
+function downloadCsv(filename: string, csvText: string) {
   const blob = new Blob(["\uFEFF" + csvText], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
