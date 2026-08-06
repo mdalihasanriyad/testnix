@@ -109,7 +109,32 @@ function buildChartCsv(rows: RecentTest[]) {
 
 
 
-function downloadCsv(filename: string, csvText: string) {
+function computeStats(rows: RecentTest[]) {
+  if (rows.length === 0) return null;
+  const download = rows.map((r) => r.download);
+  const upload = rows.map((r) => r.upload);
+  const ping = rows.map((r) => r.ping);
+  return {
+    download: {
+      min: Math.min(...download),
+      max: Math.max(...download),
+      avg: download.reduce((a, b) => a + b, 0) / download.length,
+    },
+    upload: {
+      min: Math.min(...upload),
+      max: Math.max(...upload),
+      avg: upload.reduce((a, b) => a + b, 0) / upload.length,
+    },
+    ping: {
+      min: Math.min(...ping),
+      max: Math.max(...ping),
+      avg: ping.reduce((a, b) => a + b, 0) / ping.length,
+    },
+  };
+}
+
+
+
   const blob = new Blob(["\uFEFF" + csvText], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
