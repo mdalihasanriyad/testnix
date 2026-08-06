@@ -109,6 +109,30 @@ function buildChartCsv(rows: RecentTest[]) {
 
 
 
+function computeStats(rows: RecentTest[]) {
+  if (rows.length === 0) return null;
+  const download = rows.map((r) => r.download);
+  const upload = rows.map((r) => r.upload);
+  const ping = rows.map((r) => r.ping);
+  return {
+    download: {
+      min: Math.min(...download),
+      max: Math.max(...download),
+      avg: download.reduce((a, b) => a + b, 0) / download.length,
+    },
+    upload: {
+      min: Math.min(...upload),
+      max: Math.max(...upload),
+      avg: upload.reduce((a, b) => a + b, 0) / upload.length,
+    },
+    ping: {
+      min: Math.min(...ping),
+      max: Math.max(...ping),
+      avg: ping.reduce((a, b) => a + b, 0) / ping.length,
+    },
+  };
+}
+
 function downloadCsv(filename: string, csvText: string) {
   const blob = new Blob(["\uFEFF" + csvText], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -641,6 +665,8 @@ export function SpeedTest() {
       return true;
     })
     .sort((a, b) => a.at - b.at);
+
+  const stats = computeStats(chartRecent);
 
   const handleExportChartCsv = useCallback(() => {
     if (chartRecent.length === 0) return;
@@ -1198,6 +1224,43 @@ export function SpeedTest() {
         ) : sortedRecent.length > 0 ? (
           viewMode === "chart" ? (
             <div className="rounded-md border border-neutral-200 bg-white p-4 animate-fade-in">
+              {stats && (
+                <div className="mb-4 grid grid-cols-3 gap-3 border-b border-neutral-100 pb-4">
+                  {[
+                    { label: "Download", unit: "Mbps", key: "download" as const },
+                    { label: "Upload", unit: "Mbps", key: "upload" as const },
+                    { label: "Ping", unit: "ms", key: "ping" as const },
+                  ].map(({ label, unit, key }) => {
+                    const s = stats[key];
+                    return (
+                      <div key={key} className="text-center">
+                        <p className="text-xs font-medium text-neutral-500">{label}</p>
+                        <div className="mt-1.5 flex items-center justify-center gap-2 text-xs">
+                          <span className="flex flex-col items-center">
+                            <span className="text-[10px] text-neutral-400">Min</span>
+                            <span className="font-semibold tabular-nums text-neutral-900">
+                              {key === "ping" ? Math.round(s.min) : formatSpeed(s.min)}
+                            </span>
+                          </span>
+                          <span className="flex flex-col items-center">
+                            <span className="text-[10px] text-neutral-400">Avg</span>
+                            <span className="font-semibold tabular-nums text-neutral-900">
+                              {key === "ping" ? Math.round(s.avg) : formatSpeed(s.avg)}
+                            </span>
+                          </span>
+                          <span className="flex flex-col items-center">
+                            <span className="text-[10px] text-neutral-400">Max</span>
+                            <span className="font-semibold tabular-nums text-neutral-900">
+                              {key === "ping" ? Math.round(s.max) : formatSpeed(s.max)}
+                            </span>
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-[10px] text-neutral-400">{unit}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <div className="inline-flex rounded-md border border-neutral-200 text-xs font-medium" role="group" aria-label="Chart time range">
                   {([
