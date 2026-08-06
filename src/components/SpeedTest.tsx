@@ -134,7 +134,7 @@ function downloadJson(filename: string, jsonText: string) {
 }
 
 export function SpeedTest() {
-  const search = useSearch({ from: "/" });
+  const search = useSearch({ from: "/" }) as { speed?: string; upload?: string; ping?: string };
   const [phase, setPhase] = useState<Phase>("idle");
   const [displayed, setDisplayed] = useState(0);
   const [final, setFinal] = useState<number | null>(null);
