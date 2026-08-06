@@ -134,7 +134,7 @@ function downloadJson(filename: string, jsonText: string) {
 }
 
 export function SpeedTest() {
-  const search = useSearch({ from: "/" });
+  const search = useSearch({ from: "/" }) as { speed?: string; upload?: string; ping?: string };
   const [phase, setPhase] = useState<Phase>("idle");
   const [displayed, setDisplayed] = useState(0);
   const [final, setFinal] = useState<number | null>(null);
@@ -166,6 +166,8 @@ export function SpeedTest() {
   const [chartRange, setChartRange] = useState<"all" | "7d" | "30d" | "custom">("all");
   const [chartFrom, setChartFrom] = useState("");
   const [chartTo, setChartTo] = useState("");
+  const [exportingPng, setExportingPng] = useState(false);
+  const chartRef = useRef<HTMLDivElement | null>(null);
   const [ChartComponent, setChartComponent] = useState<React.ComponentType<{ data: { at: number; label: string; download: number; upload: number; ping: number }[] }> | null>(null);
   const savedRunIdRef = useRef<number | null>(null);
   const fromSharedRef = useRef(false);
@@ -646,6 +648,50 @@ export function SpeedTest() {
     const date = new Date().toISOString().slice(0, 10);
     downloadCsv(`testnix-trend-chart-${date}.csv`, csv);
   }, [chartRecent]);
+
+  const handleExportChartPng = useCallback(async () => {
+    const svg = chartRef.current?.querySelector("svg");
+    if (!svg) return;
+    setExportingPng(true);
+    try {
+      const rect = svg.getBoundingClientRect();
+      const width = Math.max(1, Math.round(rect.width));
+      const height = Math.max(1, Math.round(rect.height));
+      const clone = svg.cloneNode(true) as SVGSVGElement;
+      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      clone.setAttribute("width", String(width));
+      clone.setAttribute("height", String(height));
+      const source = new XMLSerializer().serializeToString(clone);
+      const url = URL.createObjectURL(new Blob([source], { type: "image/svg+xml;charset=utf-8" }));
+      const img = new Image();
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("Failed to render chart"));
+        img.src = url;
+      });
+      const scale = 2;
+      const canvas = document.createElement("canvas");
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas unavailable");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      const pngUrl = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = pngUrl;
+      a.download = `testnix-trend-chart-${new Date().toISOString().slice(0, 10)}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch {
+      /* ignore export failure */
+    } finally {
+      setExportingPng(false);
+    }
+  }, []);
 
   const activeFilterCount = [
     searchQuery.trim(),
@@ -1209,20 +1255,35 @@ export function SpeedTest() {
                   </svg>
                   Export CSV
                 </button>
+                <button
+                  type="button"
+                  onClick={handleExportChartPng}
+                  disabled={chartRecent.length === 0 || !ChartComponent || exportingPng}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="9" cy="9" r="2" />
+                    <path d="m21 15-4.5-4.5L3 21" />
+                  </svg>
+                  {exportingPng ? "Exporting…" : "Export PNG"}
+                </button>
 
               </div>
               {!ChartComponent ? (
                 <div className="skeleton h-64 w-full rounded" />
               ) : chartRecent.length > 0 ? (
-                <ChartComponent
-                  data={chartRecent.map((r) => ({
-                    at: r.at,
-                    label: formatTimestamp(r.at),
-                    download: Number(r.download.toFixed(2)),
-                    upload: Number(r.upload.toFixed(2)),
-                    ping: Math.round(r.ping),
-                  }))}
-                />
+                <div ref={chartRef}>
+                  <ChartComponent
+                    data={chartRecent.map((r) => ({
+                      at: r.at,
+                      label: formatTimestamp(r.at),
+                      download: Number(r.download.toFixed(2)),
+                      upload: Number(r.upload.toFixed(2)),
+                      ping: Math.round(r.ping),
+                    }))}
+                  />
+                </div>
               ) : (
                 <p className="py-12 text-center text-sm text-neutral-500">No tests in this time range.</p>
               )}
