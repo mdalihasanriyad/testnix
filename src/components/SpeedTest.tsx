@@ -1255,20 +1255,35 @@ export function SpeedTest() {
                   </svg>
                   Export CSV
                 </button>
+                <button
+                  type="button"
+                  onClick={handleExportChartPng}
+                  disabled={chartRecent.length === 0 || !ChartComponent || exportingPng}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="9" cy="9" r="2" />
+                    <path d="m21 15-4.5-4.5L3 21" />
+                  </svg>
+                  {exportingPng ? "Exporting…" : "Export PNG"}
+                </button>
 
               </div>
               {!ChartComponent ? (
                 <div className="skeleton h-64 w-full rounded" />
               ) : chartRecent.length > 0 ? (
-                <ChartComponent
-                  data={chartRecent.map((r) => ({
-                    at: r.at,
-                    label: formatTimestamp(r.at),
-                    download: Number(r.download.toFixed(2)),
-                    upload: Number(r.upload.toFixed(2)),
-                    ping: Math.round(r.ping),
-                  }))}
-                />
+                <div ref={chartRef}>
+                  <ChartComponent
+                    data={chartRecent.map((r) => ({
+                      at: r.at,
+                      label: formatTimestamp(r.at),
+                      download: Number(r.download.toFixed(2)),
+                      upload: Number(r.upload.toFixed(2)),
+                      ping: Math.round(r.ping),
+                    }))}
+                  />
+                </div>
               ) : (
                 <p className="py-12 text-center text-sm text-neutral-500">No tests in this time range.</p>
               )}
