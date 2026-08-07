@@ -109,6 +109,44 @@ function buildChartCsv(rows: RecentTest[]) {
 
 
 
+async function svgToPngDataUrl(svg: SVGSVGElement, scale = 2) {
+  const rect = svg.getBoundingClientRect();
+  const width = Math.max(1, Math.round(rect.width));
+  const height = Math.max(1, Math.round(rect.height));
+  const clone = svg.cloneNode(true) as SVGSVGElement;
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  clone.setAttribute("width", String(width));
+  clone.setAttribute("height", String(height));
+  if (!clone.getAttribute("viewBox")) clone.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  // Recharts leaves animation dash values inline, which hide the lines when rasterized.
+  clone.querySelectorAll("path").forEach((path) => {
+    path.style.removeProperty("stroke-dasharray");
+    path.style.removeProperty("stroke-dashoffset");
+    path.style.removeProperty("opacity");
+  });
+  const source = new XMLSerializer().serializeToString(clone);
+  const url = URL.createObjectURL(new Blob([source], { type: "image/svg+xml;charset=utf-8" }));
+  try {
+    const img = new Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Failed to render chart"));
+      img.src = url;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas unavailable");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return { dataUrl: canvas.toDataURL("image/png"), width, height };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 function findChartSvg(root: HTMLElement | null): SVGSVGElement | null {
   if (!root) return null;
   const svgs = Array.from(root.querySelectorAll("svg"));
