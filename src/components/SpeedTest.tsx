@@ -109,6 +109,62 @@ function buildChartCsv(rows: RecentTest[]) {
 
 
 
+async function svgToPngDataUrl(svg: SVGSVGElement, scale = 2) {
+  const rect = svg.getBoundingClientRect();
+  const width = Math.max(1, Math.round(rect.width));
+  const height = Math.max(1, Math.round(rect.height));
+  const clone = svg.cloneNode(true) as SVGSVGElement;
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  clone.setAttribute("width", String(width));
+  clone.setAttribute("height", String(height));
+  if (!clone.getAttribute("viewBox")) clone.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  // Recharts leaves animation dash values inline, which hide the lines when rasterized.
+  clone.querySelectorAll("path").forEach((path) => {
+    path.style.removeProperty("stroke-dasharray");
+    path.style.removeProperty("stroke-dashoffset");
+    path.style.removeProperty("opacity");
+    const dash = path.getAttribute("stroke-dasharray");
+    if (dash && /^0px/.test(dash)) path.removeAttribute("stroke-dasharray");
+  });
+  const source = new XMLSerializer().serializeToString(clone);
+  const url = URL.createObjectURL(new Blob([source], { type: "image/svg+xml;charset=utf-8" }));
+  try {
+    const img = new Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Failed to render chart"));
+      img.src = url;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas unavailable");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return { dataUrl: canvas.toDataURL("image/png"), width, height };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function findChartSvg(root: HTMLElement | null): SVGSVGElement | null {
+  if (!root) return null;
+  const svgs = Array.from(root.querySelectorAll("svg"));
+  let best: SVGSVGElement | null = null;
+  let bestArea = 0;
+  for (const svg of svgs) {
+    const r = svg.getBoundingClientRect();
+    const area = r.width * r.height;
+    if (area > bestArea) {
+      bestArea = area;
+      best = svg as SVGSVGElement;
+    }
+  }
+  return best;
+}
+
 function computeStats(rows: RecentTest[]) {
   if (rows.length === 0) return null;
   const download = rows.map((r) => r.download);
@@ -191,6 +247,7 @@ export function SpeedTest() {
   const [chartFrom, setChartFrom] = useState("");
   const [chartTo, setChartTo] = useState("");
   const [exportingPng, setExportingPng] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const chartRef = useRef<HTMLDivElement | null>(null);
   const [ChartComponent, setChartComponent] = useState<React.ComponentType<{ data: { at: number; label: string; download: number; upload: number; ping: number }[] }> | null>(null);
   const savedRunIdRef = useRef<number | null>(null);
@@ -676,38 +733,13 @@ export function SpeedTest() {
   }, [chartRecent]);
 
   const handleExportChartPng = useCallback(async () => {
-    const svg = chartRef.current?.querySelector("svg");
+    const svg = findChartSvg(chartRef.current);
     if (!svg) return;
     setExportingPng(true);
     try {
-      const rect = svg.getBoundingClientRect();
-      const width = Math.max(1, Math.round(rect.width));
-      const height = Math.max(1, Math.round(rect.height));
-      const clone = svg.cloneNode(true) as SVGSVGElement;
-      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-      clone.setAttribute("width", String(width));
-      clone.setAttribute("height", String(height));
-      const source = new XMLSerializer().serializeToString(clone);
-      const url = URL.createObjectURL(new Blob([source], { type: "image/svg+xml;charset=utf-8" }));
-      const img = new Image();
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error("Failed to render chart"));
-        img.src = url;
-      });
-      const scale = 2;
-      const canvas = document.createElement("canvas");
-      canvas.width = width * scale;
-      canvas.height = height * scale;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas unavailable");
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      URL.revokeObjectURL(url);
-      const pngUrl = canvas.toDataURL("image/png");
+      const { dataUrl } = await svgToPngDataUrl(svg);
       const a = document.createElement("a");
-      a.href = pngUrl;
+      a.href = dataUrl;
       a.download = `testnix-trend-chart-${new Date().toISOString().slice(0, 10)}.png`;
       document.body.appendChild(a);
       a.click();
@@ -718,6 +750,170 @@ export function SpeedTest() {
       setExportingPng(false);
     }
   }, []);
+
+  const handleExportPdf = useCallback(async () => {
+    if (chartRecent.length === 0 || !stats) return;
+    setExportingPdf(true);
+    try {
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 40;
+      const contentW = pageW - margin * 2;
+
+      const rangeLabel =
+        chartRange === "all"
+          ? "All time"
+          : chartRange === "7d"
+            ? "Last 7 days"
+            : chartRange === "30d"
+              ? "Last 30 days"
+              : `${chartFrom || "start"} to ${chartTo || "now"}`;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.text("Testnix Speed Test Report", margin, 60);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(115);
+      doc.text(`Range: ${rangeLabel}`, margin, 78);
+      doc.text(
+        `${chartRecent.length} test${chartRecent.length === 1 ? "" : "s"}  ·  Generated ${formatTimestamp(Date.now())}`,
+        margin,
+        92,
+      );
+      doc.setDrawColor(229);
+      doc.line(margin, 104, pageW - margin, 104);
+
+      // Summary stats table
+      doc.setTextColor(23);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text("Summary", margin, 128);
+
+      const cols = [margin, margin + 150, margin + 260, margin + 370];
+      let y = 150;
+      doc.setFontSize(10);
+      doc.setTextColor(115);
+      doc.text("Metric", cols[0], y);
+      doc.text("Min", cols[1], y);
+      doc.text("Avg", cols[2], y);
+      doc.text("Max", cols[3], y);
+      doc.setDrawColor(240);
+      doc.line(margin, y + 6, pageW - margin, y + 6);
+
+      const rows: [string, string, string, string][] = [
+        [
+          "Download (Mbps)",
+          formatSpeed(stats.download.min),
+          formatSpeed(stats.download.avg),
+          formatSpeed(stats.download.max),
+        ],
+        [
+          "Upload (Mbps)",
+          formatSpeed(stats.upload.min),
+          formatSpeed(stats.upload.avg),
+          formatSpeed(stats.upload.max),
+        ],
+        [
+          "Ping (ms)",
+          String(Math.round(stats.ping.min)),
+          String(Math.round(stats.ping.avg)),
+          String(Math.round(stats.ping.max)),
+        ],
+      ];
+      doc.setFont("helvetica", "normal");
+      for (const row of rows) {
+        y += 24;
+        doc.setTextColor(23);
+        doc.text(row[0], cols[0], y);
+        doc.text(row[1], cols[1], y);
+        doc.text(row[2], cols[2], y);
+        doc.text(row[3], cols[3], y);
+        doc.setDrawColor(245);
+        doc.line(margin, y + 7, pageW - margin, y + 7);
+      }
+
+      // Trend chart image
+      y += 40;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(23);
+      doc.text("Speed trend", margin, y);
+      y += 14;
+
+      const svg = findChartSvg(chartRef.current);
+      if (svg) {
+        try {
+          const { dataUrl, width, height } = await svgToPngDataUrl(svg);
+          const imgH = Math.min((contentW * height) / width, 260);
+          doc.addImage(dataUrl, "PNG", margin, y, contentW, imgH);
+          y += imgH + 14;
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "normal");
+          let lx = margin;
+          const legend: [string, [number, number, number]][] = [
+            ["Download (Mbps)", [23, 23, 23]],
+            ["Upload (Mbps)", [160, 160, 160]],
+            ["Ping (ms)", [239, 68, 68]],
+          ];
+          for (const [label, color] of legend) {
+            doc.setDrawColor(color[0], color[1], color[2]);
+            doc.setLineWidth(2);
+            doc.line(lx, y - 3, lx + 16, y - 3);
+            doc.setTextColor(80);
+            doc.text(label, lx + 22, y);
+            lx += 22 + doc.getTextWidth(label) + 24;
+          }
+          doc.setLineWidth(1);
+        } catch {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(10);
+          doc.setTextColor(115);
+          doc.text("Chart image unavailable.", margin, y + 16);
+          y += 24;
+        }
+      }
+
+      // Test list
+      y += 30;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text("Tests", margin, y);
+      y += 20;
+      doc.setFontSize(9);
+      doc.setTextColor(115);
+      doc.text("When", cols[0], y);
+      doc.text("Download", cols[1], y);
+      doc.text("Upload", cols[2], y);
+      doc.text("Ping", cols[3], y);
+      doc.setDrawColor(240);
+      doc.line(margin, y + 5, pageW - margin, y + 5);
+      doc.setFont("helvetica", "normal");
+      const listRows = [...chartRecent].sort((a, b) => b.at - a.at).slice(0, 12);
+      for (const r of listRows) {
+        if (y + 16 > 780) break;
+        y += 16;
+        doc.setTextColor(23);
+        doc.text(formatTimestamp(r.at), cols[0], y);
+        doc.text(`${formatSpeed(r.download)} Mbps`, cols[1], y);
+        doc.text(`${formatSpeed(r.upload)} Mbps`, cols[2], y);
+        doc.text(`${Math.round(r.ping)} ms`, cols[3], y);
+      }
+
+      doc.setFontSize(8);
+      doc.setTextColor(160);
+      doc.text("Generated with Testnix.net — free internet speed test", margin, 812);
+
+      doc.save(`testnix-report-${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch {
+      /* ignore export failure */
+    } finally {
+      setExportingPdf(false);
+    }
+  }, [chartRecent, stats, chartRange, chartFrom, chartTo]);
+
 
   const activeFilterCount = [
     searchQuery.trim(),
@@ -1331,6 +1527,20 @@ export function SpeedTest() {
                   </svg>
                   {exportingPng ? "Exporting…" : "Export PNG"}
                 </button>
+                <button
+                  type="button"
+                  onClick={handleExportPdf}
+                  disabled={chartRecent.length === 0 || !ChartComponent || exportingPdf}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="9" y1="15" x2="15" y2="15" />
+                  </svg>
+                  {exportingPdf ? "Building PDF…" : "Export PDF"}
+                </button>
+
 
               </div>
               {!ChartComponent ? (

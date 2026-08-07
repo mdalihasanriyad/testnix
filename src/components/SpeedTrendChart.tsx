@@ -72,6 +72,7 @@ export function SpeedTrendChart({ data }: { data: ChartTestPoint[] }) {
           <Line
             yAxisId="speed"
             type="monotone"
+            isAnimationActive={false}
             dataKey="download"
             name="Download"
             stroke="#171717"
@@ -82,6 +83,7 @@ export function SpeedTrendChart({ data }: { data: ChartTestPoint[] }) {
           <Line
             yAxisId="speed"
             type="monotone"
+            isAnimationActive={false}
             dataKey="upload"
             name="Upload"
             stroke="#E5E5E5"
@@ -93,6 +95,7 @@ export function SpeedTrendChart({ data }: { data: ChartTestPoint[] }) {
           <Line
             yAxisId="ping"
             type="monotone"
+            isAnimationActive={false}
             dataKey="ping"
             name="Ping"
             stroke="#ef4444"
