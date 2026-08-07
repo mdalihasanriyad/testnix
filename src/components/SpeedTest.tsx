@@ -123,6 +123,8 @@ async function svgToPngDataUrl(svg: SVGSVGElement, scale = 2) {
     path.style.removeProperty("stroke-dasharray");
     path.style.removeProperty("stroke-dashoffset");
     path.style.removeProperty("opacity");
+    const dash = path.getAttribute("stroke-dasharray");
+    if (dash && /^0px/.test(dash)) path.removeAttribute("stroke-dasharray");
   });
   const source = new XMLSerializer().serializeToString(clone);
   const url = URL.createObjectURL(new Blob([source], { type: "image/svg+xml;charset=utf-8" }));
