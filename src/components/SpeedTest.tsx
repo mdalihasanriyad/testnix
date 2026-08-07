@@ -720,6 +720,171 @@ export function SpeedTest() {
     }
   }, []);
 
+  const handleExportPdf = useCallback(async () => {
+    if (chartRecent.length === 0 || !stats) return;
+    setExportingPdf(true);
+    try {
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 40;
+      const contentW = pageW - margin * 2;
+
+      const rangeLabel =
+        chartRange === "all"
+          ? "All time"
+          : chartRange === "7d"
+            ? "Last 7 days"
+            : chartRange === "30d"
+              ? "Last 30 days"
+              : `${chartFrom || "start"} to ${chartTo || "now"}`;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.text("Testnix Speed Test Report", margin, 60);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(115);
+      doc.text(`Range: ${rangeLabel}`, margin, 78);
+      doc.text(
+        `${chartRecent.length} test${chartRecent.length === 1 ? "" : "s"}  ·  Generated ${formatTimestamp(Date.now())}`,
+        margin,
+        92,
+      );
+      doc.setDrawColor(229);
+      doc.line(margin, 104, pageW - margin, 104);
+
+      // Summary stats table
+      doc.setTextColor(23);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text("Summary", margin, 128);
+
+      const cols = [margin, margin + 150, margin + 260, margin + 370];
+      let y = 150;
+      doc.setFontSize(10);
+      doc.setTextColor(115);
+      doc.text("Metric", cols[0], y);
+      doc.text("Min", cols[1], y);
+      doc.text("Avg", cols[2], y);
+      doc.text("Max", cols[3], y);
+      doc.setDrawColor(240);
+      doc.line(margin, y + 6, pageW - margin, y + 6);
+
+      const rows: [string, string, string, string][] = [
+        [
+          "Download (Mbps)",
+          formatSpeed(stats.download.min),
+          formatSpeed(stats.download.avg),
+          formatSpeed(stats.download.max),
+        ],
+        [
+          "Upload (Mbps)",
+          formatSpeed(stats.upload.min),
+          formatSpeed(stats.upload.avg),
+          formatSpeed(stats.upload.max),
+        ],
+        [
+          "Ping (ms)",
+          String(Math.round(stats.ping.min)),
+          String(Math.round(stats.ping.avg)),
+          String(Math.round(stats.ping.max)),
+        ],
+      ];
+      doc.setFont("helvetica", "normal");
+      for (const row of rows) {
+        y += 24;
+        doc.setTextColor(23);
+        doc.text(row[0], cols[0], y);
+        doc.text(row[1], cols[1], y);
+        doc.text(row[2], cols[2], y);
+        doc.text(row[3], cols[3], y);
+        doc.setDrawColor(245);
+        doc.line(margin, y + 7, pageW - margin, y + 7);
+      }
+
+      // Trend chart image
+      y += 40;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(23);
+      doc.text("Speed trend", margin, y);
+      y += 14;
+
+      const svg = chartRef.current?.querySelector("svg");
+      if (svg) {
+        const rect = svg.getBoundingClientRect();
+        const width = Math.max(1, Math.round(rect.width));
+        const height = Math.max(1, Math.round(rect.height));
+        const clone = svg.cloneNode(true) as SVGSVGElement;
+        clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        clone.setAttribute("width", String(width));
+        clone.setAttribute("height", String(height));
+        const source = new XMLSerializer().serializeToString(clone);
+        const url = URL.createObjectURL(
+          new Blob([source], { type: "image/svg+xml;charset=utf-8" }),
+        );
+        const img = new Image();
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("Failed to render chart"));
+          img.src = url;
+        });
+        const scale = 2;
+        const canvas = document.createElement("canvas");
+        canvas.width = width * scale;
+        canvas.height = height * scale;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const imgH = Math.min((contentW * height) / width, 260);
+          doc.addImage(canvas.toDataURL("image/png"), "PNG", margin, y, contentW, imgH);
+          y += imgH;
+        }
+        URL.revokeObjectURL(url);
+      }
+
+      // Test list
+      y += 30;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text("Tests", margin, y);
+      y += 20;
+      doc.setFontSize(9);
+      doc.setTextColor(115);
+      doc.text("When", cols[0], y);
+      doc.text("Download", cols[1], y);
+      doc.text("Upload", cols[2], y);
+      doc.text("Ping", cols[3], y);
+      doc.setDrawColor(240);
+      doc.line(margin, y + 5, pageW - margin, y + 5);
+      doc.setFont("helvetica", "normal");
+      const listRows = [...chartRecent].sort((a, b) => b.at - a.at).slice(0, 12);
+      for (const r of listRows) {
+        y += 16;
+        doc.setTextColor(23);
+        doc.text(formatTimestamp(r.at), cols[0], y);
+        doc.text(`${formatSpeed(r.download)} Mbps`, cols[1], y);
+        doc.text(`${formatSpeed(r.upload)} Mbps`, cols[2], y);
+        doc.text(`${Math.round(r.ping)} ms`, cols[3], y);
+      }
+
+      doc.setFontSize(8);
+      doc.setTextColor(160);
+      doc.text("Generated with Testnix.net — free internet speed test", margin, 812);
+
+      doc.save(`testnix-report-${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch {
+      /* ignore export failure */
+    } finally {
+      setExportingPdf(false);
+    }
+  }, [chartRecent, stats, chartRange, chartFrom, chartTo]);
+
+
   const activeFilterCount = [
     searchQuery.trim(),
     dateFilter !== "all",
