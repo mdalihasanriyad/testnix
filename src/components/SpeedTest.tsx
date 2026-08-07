@@ -849,7 +849,24 @@ export function SpeedTest() {
           const { dataUrl, width, height } = await svgToPngDataUrl(svg);
           const imgH = Math.min((contentW * height) / width, 260);
           doc.addImage(dataUrl, "PNG", margin, y, contentW, imgH);
-          y += imgH;
+          y += imgH + 14;
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "normal");
+          let lx = margin;
+          const legend: [string, [number, number, number]][] = [
+            ["Download (Mbps)", [23, 23, 23]],
+            ["Upload (Mbps)", [160, 160, 160]],
+            ["Ping (ms)", [239, 68, 68]],
+          ];
+          for (const [label, color] of legend) {
+            doc.setDrawColor(color[0], color[1], color[2]);
+            doc.setLineWidth(2);
+            doc.line(lx, y - 3, lx + 16, y - 3);
+            doc.setTextColor(80);
+            doc.text(label, lx + 22, y);
+            lx += 22 + doc.getTextWidth(label) + 24;
+          }
+          doc.setLineWidth(1);
         } catch {
           doc.setFont("helvetica", "normal");
           doc.setFontSize(10);
