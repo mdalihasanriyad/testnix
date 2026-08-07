@@ -893,6 +893,7 @@ export function SpeedTest() {
       doc.setFont("helvetica", "normal");
       const listRows = [...chartRecent].sort((a, b) => b.at - a.at).slice(0, 12);
       for (const r of listRows) {
+        if (y + 16 > 780) break;
         y += 16;
         doc.setTextColor(23);
         doc.text(formatTimestamp(r.at), cols[0], y);
