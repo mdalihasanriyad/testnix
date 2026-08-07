@@ -688,6 +688,7 @@ export function SpeedTest() {
       clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
       clone.setAttribute("width", String(width));
       clone.setAttribute("height", String(height));
+      if (!clone.getAttribute("viewBox")) clone.setAttribute("viewBox", `0 0 ${width} ${height}`);
       const source = new XMLSerializer().serializeToString(clone);
       const url = URL.createObjectURL(new Blob([source], { type: "image/svg+xml;charset=utf-8" }));
       const img = new Image();
@@ -821,6 +822,7 @@ export function SpeedTest() {
         clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
         clone.setAttribute("width", String(width));
         clone.setAttribute("height", String(height));
+        if (!clone.getAttribute("viewBox")) clone.setAttribute("viewBox", `0 0 ${width} ${height}`);
         const source = new XMLSerializer().serializeToString(clone);
         const url = URL.createObjectURL(
           new Blob([source], { type: "image/svg+xml;charset=utf-8" }),
