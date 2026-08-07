@@ -109,6 +109,22 @@ function buildChartCsv(rows: RecentTest[]) {
 
 
 
+function findChartSvg(root: HTMLElement | null): SVGSVGElement | null {
+  if (!root) return null;
+  const svgs = Array.from(root.querySelectorAll("svg"));
+  let best: SVGSVGElement | null = null;
+  let bestArea = 0;
+  for (const svg of svgs) {
+    const r = svg.getBoundingClientRect();
+    const area = r.width * r.height;
+    if (area > bestArea) {
+      bestArea = area;
+      best = svg as SVGSVGElement;
+    }
+  }
+  return best;
+}
+
 function computeStats(rows: RecentTest[]) {
   if (rows.length === 0) return null;
   const download = rows.map((r) => r.download);
@@ -677,7 +693,7 @@ export function SpeedTest() {
   }, [chartRecent]);
 
   const handleExportChartPng = useCallback(async () => {
-    const svg = chartRef.current?.querySelector("svg");
+    const svg = findChartSvg(chartRef.current);
     if (!svg) return;
     setExportingPng(true);
     try {
@@ -813,7 +829,7 @@ export function SpeedTest() {
       doc.text("Speed trend", margin, y);
       y += 14;
 
-      const svg = chartRef.current?.querySelector("svg");
+      const svg = findChartSvg(chartRef.current);
       if (svg) {
         const rect = svg.getBoundingClientRect();
         const width = Math.max(1, Math.round(rect.width));
