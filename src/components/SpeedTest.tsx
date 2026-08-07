@@ -735,35 +735,9 @@ export function SpeedTest() {
     if (!svg) return;
     setExportingPng(true);
     try {
-      const rect = svg.getBoundingClientRect();
-      const width = Math.max(1, Math.round(rect.width));
-      const height = Math.max(1, Math.round(rect.height));
-      const clone = svg.cloneNode(true) as SVGSVGElement;
-      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-      clone.setAttribute("width", String(width));
-      clone.setAttribute("height", String(height));
-      if (!clone.getAttribute("viewBox")) clone.setAttribute("viewBox", `0 0 ${width} ${height}`);
-      const source = new XMLSerializer().serializeToString(clone);
-      const url = URL.createObjectURL(new Blob([source], { type: "image/svg+xml;charset=utf-8" }));
-      const img = new Image();
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error("Failed to render chart"));
-        img.src = url;
-      });
-      const scale = 2;
-      const canvas = document.createElement("canvas");
-      canvas.width = width * scale;
-      canvas.height = height * scale;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas unavailable");
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      URL.revokeObjectURL(url);
-      const pngUrl = canvas.toDataURL("image/png");
+      const { dataUrl } = await svgToPngDataUrl(svg);
       const a = document.createElement("a");
-      a.href = pngUrl;
+      a.href = dataUrl;
       a.download = `testnix-trend-chart-${new Date().toISOString().slice(0, 10)}.png`;
       document.body.appendChild(a);
       a.click();
@@ -869,38 +843,18 @@ export function SpeedTest() {
 
       const svg = findChartSvg(chartRef.current);
       if (svg) {
-        const rect = svg.getBoundingClientRect();
-        const width = Math.max(1, Math.round(rect.width));
-        const height = Math.max(1, Math.round(rect.height));
-        const clone = svg.cloneNode(true) as SVGSVGElement;
-        clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-        clone.setAttribute("width", String(width));
-        clone.setAttribute("height", String(height));
-        if (!clone.getAttribute("viewBox")) clone.setAttribute("viewBox", `0 0 ${width} ${height}`);
-        const source = new XMLSerializer().serializeToString(clone);
-        const url = URL.createObjectURL(
-          new Blob([source], { type: "image/svg+xml;charset=utf-8" }),
-        );
-        const img = new Image();
-        await new Promise<void>((resolve, reject) => {
-          img.onload = () => resolve();
-          img.onerror = () => reject(new Error("Failed to render chart"));
-          img.src = url;
-        });
-        const scale = 2;
-        const canvas = document.createElement("canvas");
-        canvas.width = width * scale;
-        canvas.height = height * scale;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        try {
+          const { dataUrl, width, height } = await svgToPngDataUrl(svg);
           const imgH = Math.min((contentW * height) / width, 260);
-          doc.addImage(canvas.toDataURL("image/png"), "PNG", margin, y, contentW, imgH);
+          doc.addImage(dataUrl, "PNG", margin, y, contentW, imgH);
           y += imgH;
+        } catch {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(10);
+          doc.setTextColor(115);
+          doc.text("Chart image unavailable.", margin, y + 16);
+          y += 24;
         }
-        URL.revokeObjectURL(url);
       }
 
       // Test list
