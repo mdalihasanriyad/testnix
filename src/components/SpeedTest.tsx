@@ -248,6 +248,7 @@ export function SpeedTest() {
   const [chartTo, setChartTo] = useState("");
   const [exportingPng, setExportingPng] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const chartRef = useRef<HTMLDivElement | null>(null);
   const [ChartComponent, setChartComponent] = useState<React.ComponentType<{ data: { at: number; label: string; download: number; upload: number; ping: number }[] }> | null>(null);
   const savedRunIdRef = useRef<number | null>(null);
@@ -914,6 +915,159 @@ export function SpeedTest() {
     }
   }, [chartRecent, stats, chartRange, chartFrom, chartTo]);
 
+  const handlePrintReport = useCallback(async () => {
+    if (chartRecent.length === 0 || !stats) return;
+    setPrinting(true);
+    try {
+      const rangeLabel =
+        chartRange === "all"
+          ? "All time"
+          : chartRange === "7d"
+            ? "Last 7 days"
+            : chartRange === "30d"
+              ? "Last 30 days"
+              : `${chartFrom || "start"} to ${chartTo || "now"}`;
+
+      let chartImageHtml = "";
+      const svg = findChartSvg(chartRef.current);
+      if (svg) {
+        try {
+          const { dataUrl } = await svgToPngDataUrl(svg);
+          chartImageHtml = `<img src="${dataUrl}" alt="Speed trend chart" style="width:100%;max-width:100%;height:auto;margin:0 0 16px;" />`;
+        } catch {
+          chartImageHtml = `<p style="color:#737373;font-size:12px;">Chart image unavailable.</p>`;
+        }
+      }
+
+      const listRows = [...chartRecent].sort((a, b) => b.at - a.at).slice(0, 20);
+      const rowsHtml = listRows
+        .map(
+          (r) => `
+          <tr>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;font-size:12px;color:#171717;">${formatTimestamp(r.at)}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;font-size:12px;color:#171717;text-align:right;">${formatSpeed(r.download)} Mbps</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;font-size:12px;color:#171717;text-align:right;">${formatSpeed(r.upload)} Mbps</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;font-size:12px;color:#171717;text-align:right;">${Math.round(r.ping)} ms</td>
+          </tr>
+        `,
+        )
+        .join("");
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <title>Testnix Speed Test Report</title>
+            <style>
+              @page { margin: 16mm; }
+              body { font-family: Helvetica, Arial, sans-serif; color: #171717; margin: 0; padding: 24px; background: #fff; }
+              h1 { font-size: 22px; margin: 0 0 6px; }
+              .meta { font-size: 11px; color: #737373; margin-bottom: 18px; }
+              table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+              th { text-align: left; padding: 8px 12px; font-size: 11px; color: #737373; border-bottom: 1px solid #d4d4d4; font-weight: 600; }
+              td { padding: 8px 12px; }
+              .footer { font-size: 10px; color: #a3a3a3; margin-top: 24px; border-top: 1px solid #e5e5e5; padding-top: 12px; }
+            </style>
+          </head>
+          <body>
+            <h1>Testnix Speed Test Report</h1>
+            <p class="meta">
+              Range: ${rangeLabel} &nbsp;·&nbsp; ${chartRecent.length} test${chartRecent.length === 1 ? "" : "s"} &nbsp;·&nbsp; Generated ${formatTimestamp(Date.now())}
+            </p>
+
+            <h2 style="font-size:15px;margin:0 0 10px;">Summary</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th style="text-align:right;">Min</th>
+                  <th style="text-align:right;">Avg</th>
+                  <th style="text-align:right;">Max</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-weight:600;">Download (Mbps)</td>
+                  <td style="text-align:right;">${formatSpeed(stats.download.min)}</td>
+                  <td style="text-align:right;">${formatSpeed(stats.download.avg)}</td>
+                  <td style="text-align:right;">${formatSpeed(stats.download.max)}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;">Upload (Mbps)</td>
+                  <td style="text-align:right;">${formatSpeed(stats.upload.min)}</td>
+                  <td style="text-align:right;">${formatSpeed(stats.upload.avg)}</td>
+                  <td style="text-align:right;">${formatSpeed(stats.upload.max)}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;">Ping (ms)</td>
+                  <td style="text-align:right;">${Math.round(stats.ping.min)}</td>
+                  <td style="text-align:right;">${Math.round(stats.ping.avg)}</td>
+                  <td style="text-align:right;">${Math.round(stats.ping.max)}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h2 style="font-size:15px;margin:0 0 10px;">Speed trend</h2>
+            ${chartImageHtml}
+            <div style="display:flex;flex-wrap:wrap;gap:18px;margin-bottom:18px;font-size:12px;color:#525252;">
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <span style="display:inline-block;width:16px;height:3px;background:#171717;"></span>
+                Download (Mbps)
+              </span>
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <span style="display:inline-block;width:16px;height:3px;background:#a0a0a0;"></span>
+                Upload (Mbps)
+              </span>
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <span style="display:inline-block;width:16px;height:3px;background:#ef4444;"></span>
+                Ping (ms)
+              </span>
+            </div>
+
+            <h2 style="font-size:15px;margin:24px 0 10px;">Tests</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th style="text-align:right;">Download</th>
+                  <th style="text-align:right;">Upload</th>
+                  <th style="text-align:right;">Ping</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+
+            <p class="footer">Generated with Testnix.net — free internet speed test</p>
+          </body>
+        </html>
+      `;
+
+      const printWindow = window.open("", "_blank", "width=900,height=700");
+      if (!printWindow) return;
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.focus();
+      // Wait for the image to render before printing.
+      const img = printWindow.document.querySelector("img");
+      if (img && !img.complete) {
+        await new Promise<void>((resolve) => {
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+          setTimeout(resolve, 500);
+        });
+      }
+      printWindow.print();
+      printWindow.addEventListener("afterprint", () => printWindow.close());
+    } catch {
+      /* ignore print failure */
+    } finally {
+      setPrinting(false);
+    }
+  }, [chartRecent, stats, chartRange, chartFrom, chartTo]);
+
 
   const activeFilterCount = [
     searchQuery.trim(),
@@ -1539,6 +1693,19 @@ export function SpeedTest() {
                     <line x1="9" y1="15" x2="15" y2="15" />
                   </svg>
                   {exportingPdf ? "Building PDF…" : "Export PDF"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handlePrintReport()}
+                  disabled={chartRecent.length === 0 || !ChartComponent || printing}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="6 9 6 2 18 2 18 9" />
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                    <rect x="6" y="14" width="12" height="8" />
+                  </svg>
+                  {printing ? "Preparing…" : "Print Report"}
                 </button>
 
 
