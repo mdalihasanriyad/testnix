@@ -1010,6 +1010,20 @@ export function SpeedTest() {
 
             <h2 style="font-size:15px;margin:0 0 10px;">Speed trend</h2>
             ${chartImageHtml}
+            <div style="display:flex;flex-wrap:wrap;gap:18px;margin-bottom:18px;font-size:12px;color:#525252;">
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <span style="display:inline-block;width:16px;height:3px;background:#171717;"></span>
+                Download (Mbps)
+              </span>
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <span style="display:inline-block;width:16px;height:3px;background:#a0a0a0;"></span>
+                Upload (Mbps)
+              </span>
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <span style="display:inline-block;width:16px;height:3px;background:#ef4444;"></span>
+                Ping (ms)
+              </span>
+            </div>
 
             <h2 style="font-size:15px;margin:24px 0 10px;">Tests</h2>
             <table>
