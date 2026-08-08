@@ -915,6 +915,145 @@ export function SpeedTest() {
     }
   }, [chartRecent, stats, chartRange, chartFrom, chartTo]);
 
+  const handlePrintReport = useCallback(async () => {
+    if (chartRecent.length === 0 || !stats) return;
+    setPrinting(true);
+    try {
+      const rangeLabel =
+        chartRange === "all"
+          ? "All time"
+          : chartRange === "7d"
+            ? "Last 7 days"
+            : chartRange === "30d"
+              ? "Last 30 days"
+              : `${chartFrom || "start"} to ${chartTo || "now"}`;
+
+      let chartImageHtml = "";
+      const svg = findChartSvg(chartRef.current);
+      if (svg) {
+        try {
+          const { dataUrl } = await svgToPngDataUrl(svg);
+          chartImageHtml = `<img src="${dataUrl}" alt="Speed trend chart" style="width:100%;max-width:100%;height:auto;margin:0 0 16px;" />`;
+        } catch {
+          chartImageHtml = `<p style="color:#737373;font-size:12px;">Chart image unavailable.</p>`;
+        }
+      }
+
+      const listRows = [...chartRecent].sort((a, b) => b.at - a.at).slice(0, 20);
+      const rowsHtml = listRows
+        .map(
+          (r) => `
+          <tr>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;font-size:12px;color:#171717;">${formatTimestamp(r.at)}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;font-size:12px;color:#171717;text-align:right;">${formatSpeed(r.download)} Mbps</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;font-size:12px;color:#171717;text-align:right;">${formatSpeed(r.upload)} Mbps</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;font-size:12px;color:#171717;text-align:right;">${Math.round(r.ping)} ms</td>
+          </tr>
+        `,
+        )
+        .join("");
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <title>Testnix Speed Test Report</title>
+            <style>
+              @page { margin: 16mm; }
+              body { font-family: Helvetica, Arial, sans-serif; color: #171717; margin: 0; padding: 24px; background: #fff; }
+              h1 { font-size: 22px; margin: 0 0 6px; }
+              .meta { font-size: 11px; color: #737373; margin-bottom: 18px; }
+              table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+              th { text-align: left; padding: 8px 12px; font-size: 11px; color: #737373; border-bottom: 1px solid #d4d4d4; font-weight: 600; }
+              td { padding: 8px 12px; }
+              .footer { font-size: 10px; color: #a3a3a3; margin-top: 24px; border-top: 1px solid #e5e5e5; padding-top: 12px; }
+            </style>
+          </head>
+          <body>
+            <h1>Testnix Speed Test Report</h1>
+            <p class="meta">
+              Range: ${rangeLabel} &nbsp;·&nbsp; ${chartRecent.length} test${chartRecent.length === 1 ? "" : "s"} &nbsp;·&nbsp; Generated ${formatTimestamp(Date.now())}
+            </p>
+
+            <h2 style="font-size:15px;margin:0 0 10px;">Summary</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th style="text-align:right;">Min</th>
+                  <th style="text-align:right;">Avg</th>
+                  <th style="text-align:right;">Max</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-weight:600;">Download (Mbps)</td>
+                  <td style="text-align:right;">${formatSpeed(stats.download.min)}</td>
+                  <td style="text-align:right;">${formatSpeed(stats.download.avg)}</td>
+                  <td style="text-align:right;">${formatSpeed(stats.download.max)}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;">Upload (Mbps)</td>
+                  <td style="text-align:right;">${formatSpeed(stats.upload.min)}</td>
+                  <td style="text-align:right;">${formatSpeed(stats.upload.avg)}</td>
+                  <td style="text-align:right;">${formatSpeed(stats.upload.max)}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;">Ping (ms)</td>
+                  <td style="text-align:right;">${Math.round(stats.ping.min)}</td>
+                  <td style="text-align:right;">${Math.round(stats.ping.avg)}</td>
+                  <td style="text-align:right;">${Math.round(stats.ping.max)}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h2 style="font-size:15px;margin:0 0 10px;">Speed trend</h2>
+            ${chartImageHtml}
+
+            <h2 style="font-size:15px;margin:24px 0 10px;">Tests</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th style="text-align:right;">Download</th>
+                  <th style="text-align:right;">Upload</th>
+                  <th style="text-align:right;">Ping</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+
+            <p class="footer">Generated with Testnix.net — free internet speed test</p>
+          </body>
+        </html>
+      `;
+
+      const printWindow = window.open("", "_blank", "width=900,height=700");
+      if (!printWindow) return;
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.focus();
+      // Wait for the image to render before printing.
+      const img = printWindow.document.querySelector("img");
+      if (img && !img.complete) {
+        await new Promise<void>((resolve) => {
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+          setTimeout(resolve, 500);
+        });
+      }
+      printWindow.print();
+      printWindow.addEventListener("afterprint", () => printWindow.close());
+    } catch {
+      /* ignore print failure */
+    } finally {
+      setPrinting(false);
+    }
+  }, [chartRecent, stats, chartRange, chartFrom, chartTo]);
+
 
   const activeFilterCount = [
     searchQuery.trim(),
