@@ -248,6 +248,7 @@ export function SpeedTest() {
   const [chartTo, setChartTo] = useState("");
   const [exportingPng, setExportingPng] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const chartRef = useRef<HTMLDivElement | null>(null);
   const [ChartComponent, setChartComponent] = useState<React.ComponentType<{ data: { at: number; label: string; download: number; upload: number; ping: number }[] }> | null>(null);
   const savedRunIdRef = useRef<number | null>(null);
