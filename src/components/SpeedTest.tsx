@@ -40,6 +40,21 @@ type RecentTest = {
 
 const RECENT_KEY = "testnix.recentTests";
 const MAX_RECENT = 5;
+const SCHEDULE_KEY = "testnix.scheduleMinutes";
+const SCHEDULE_OPTIONS = [
+  { value: 0, label: "Off" },
+  { value: 5, label: "Every 5 min" },
+  { value: 15, label: "Every 15 min" },
+  { value: 30, label: "Every 30 min" },
+  { value: 60, label: "Every hour" },
+];
+
+function formatCountdown(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 
 function loadRecent(): RecentTest[] {
   if (typeof window === "undefined") return [];
@@ -257,6 +272,10 @@ export function SpeedTest() {
   const [exportingPdf, setExportingPdf] = useState(false);
   const [printing, setPrinting] = useState(false);
   const [reportCopied, setReportCopied] = useState(false);
+  const [scheduleMinutes, setScheduleMinutes] = useState(0);
+  const [nextRunAt, setNextRunAt] = useState<number | null>(null);
+  const [secondsToNext, setSecondsToNext] = useState<number | null>(null);
+
   const chartRef = useRef<HTMLDivElement | null>(null);
   const [ChartComponent, setChartComponent] = useState<React.ComponentType<{ data: { at: number; label: string; download: number; upload: number; ping: number }[] }> | null>(null);
   const savedRunIdRef = useRef<number | null>(null);
@@ -494,6 +513,65 @@ export function SpeedTest() {
   const runExtras = useCallback(async () => {
     setShowMore(true);
   }, []);
+
+  // ---- Scheduled (automatic) tests ----
+  const runTestRef = useRef(runTest);
+  runTestRef.current = runTest;
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(SCHEDULE_KEY);
+      if (saved) {
+        const mins = parseInt(saved, 10);
+        if (!Number.isNaN(mins) && SCHEDULE_OPTIONS.some((o) => o.value === mins)) {
+          setScheduleMinutes(mins);
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  const handleScheduleChange = useCallback((mins: number) => {
+    setScheduleMinutes(mins);
+    setNextRunAt(mins > 0 ? Date.now() + mins * 60_000 : null);
+    try {
+      window.localStorage.setItem(SCHEDULE_KEY, String(mins));
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  // Arm the countdown whenever a run finishes while scheduling is on.
+  useEffect(() => {
+    if (scheduleMinutes <= 0) {
+      setNextRunAt(null);
+      return;
+    }
+    if (phase === "done") {
+      setNextRunAt(Date.now() + scheduleMinutes * 60_000);
+    }
+  }, [scheduleMinutes, phase]);
+
+  // Tick the countdown and fire the scheduled run.
+  useEffect(() => {
+    if (scheduleMinutes <= 0 || nextRunAt === null) {
+      setSecondsToNext(null);
+      return;
+    }
+    const tick = () => {
+      const remaining = Math.max(0, Math.round((nextRunAt - Date.now()) / 1000));
+      setSecondsToNext(remaining);
+      if (remaining <= 0) {
+        setNextRunAt(null);
+        void runTestRef.current();
+      }
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [scheduleMinutes, nextRunAt]);
+
 
 
   useEffect(() => {
@@ -1333,7 +1411,7 @@ export function SpeedTest() {
             </div>
           </div>
 
-          <div className="mt-6 flex w-full max-w-3xl items-center justify-between rounded-md border border-neutral-200 px-4 py-3 text-sm text-neutral-500 animate-fade-in">
+          <div className="mt-6 flex w-full max-w-3xl flex-wrap items-center justify-between gap-3 rounded-md border border-neutral-200 px-4 py-3 text-sm text-neutral-500 animate-fade-in">
             <button
               type="button"
               onClick={() => phase === "done" && void runTest()}
@@ -1342,6 +1420,31 @@ export function SpeedTest() {
             >
               <span aria-hidden>⚙</span> Settings
             </button>
+            <div className="flex items-center gap-2">
+              <label htmlFor="schedule-interval" className="whitespace-nowrap text-xs text-neutral-500">
+                Auto-run
+              </label>
+              <select
+                id="schedule-interval"
+                value={scheduleMinutes}
+                onChange={(e) => handleScheduleChange(Number(e.target.value))}
+                className="rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-600 focus:border-neutral-900 focus:outline-none"
+                aria-label="Automatic speed test interval"
+              >
+                {SCHEDULE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </div>
+            {scheduleMinutes > 0 && (
+              <span className="w-full text-center text-xs text-neutral-400 sm:w-auto sm:text-left" aria-live="polite">
+                {phase !== "done"
+                  ? "Next test starts after this run"
+                  : secondsToNext !== null
+                    ? `Next test in ${formatCountdown(secondsToNext)}`
+                    : "Automatic tests on"}
+              </span>
+            )}
             <span className="tabular-nums">
               {downloadedMB > 0 ? `${downloadedMB.toFixed(0)}MB ↓` : ""}
             </span>
