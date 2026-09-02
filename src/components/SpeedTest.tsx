@@ -214,7 +214,14 @@ function downloadJson(filename: string, jsonText: string) {
 }
 
 export function SpeedTest() {
-  const search = useSearch({ from: "/" }) as { speed?: string; upload?: string; ping?: string };
+  const search = useSearch({ from: "/" }) as {
+    speed?: string;
+    upload?: string;
+    ping?: string;
+    reportRange?: string;
+    reportFrom?: string;
+    reportTo?: string;
+  };
   const [phase, setPhase] = useState<Phase>("idle");
   const [displayed, setDisplayed] = useState(0);
   const [final, setFinal] = useState<number | null>(null);
@@ -249,6 +256,7 @@ export function SpeedTest() {
   const [exportingPng, setExportingPng] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [reportCopied, setReportCopied] = useState(false);
   const chartRef = useRef<HTMLDivElement | null>(null);
   const [ChartComponent, setChartComponent] = useState<React.ComponentType<{ data: { at: number; label: string; download: number; upload: number; ping: number }[] }> | null>(null);
   const savedRunIdRef = useRef<number | null>(null);
@@ -496,6 +504,18 @@ export function SpeedTest() {
     const sharedSpeed = typeof search.speed === "string" ? parseFloat(search.speed) : null;
     const sharedUpload = typeof search.upload === "string" ? parseFloat(search.upload) : null;
     const sharedPing = typeof search.ping === "string" ? parseFloat(search.ping) : null;
+
+    // Apply a shared report time range (chart view) if present in the URL.
+    const sharedRange = typeof search.reportRange === "string" ? search.reportRange : null;
+    if (sharedRange && ["all", "7d", "30d", "custom"].includes(sharedRange)) {
+      setViewMode("chart");
+      setChartRange(sharedRange as "all" | "7d" | "30d" | "custom");
+      if (sharedRange === "custom") {
+        if (typeof search.reportFrom === "string") setChartFrom(search.reportFrom);
+        if (typeof search.reportTo === "string") setChartTo(search.reportTo);
+      }
+    }
+
     if (sharedSpeed && !Number.isNaN(sharedSpeed)) {
       fromSharedRef.current = true;
       setFinal(sharedSpeed);
@@ -1067,6 +1087,36 @@ export function SpeedTest() {
       setPrinting(false);
     }
   }, [chartRecent, stats, chartRange, chartFrom, chartTo]);
+
+  const handleShareReport = useCallback(async () => {
+    const rangeLabel =
+      chartRange === "all"
+        ? "All time"
+        : chartRange === "7d"
+          ? "Last 7 days"
+          : chartRange === "30d"
+            ? "Last 30 days"
+            : `${chartFrom || "start"} to ${chartTo || "now"}`;
+
+    const url = new URL(window.location.origin + "/");
+    url.searchParams.set("reportRange", chartRange);
+    if (chartRange === "custom") {
+      if (chartFrom) url.searchParams.set("reportFrom", chartFrom);
+      if (chartTo) url.searchParams.set("reportTo", chartTo);
+    }
+
+    const statsText = stats
+      ? `Download avg ${formatSpeed(stats.download.avg)} Mbps, Upload avg ${formatSpeed(stats.upload.avg)} Mbps, Ping avg ${Math.round(stats.ping.avg)} ms`
+      : `${chartRecent.length} test${chartRecent.length === 1 ? "" : "s"}`;
+
+    try {
+      await navigator.clipboard.writeText(`Testnix speed test report (${rangeLabel}): ${statsText}\n${url.toString()}`);
+    } catch {
+      window.prompt("Copy this report link:", url.toString());
+    }
+    setReportCopied(true);
+    setTimeout(() => setReportCopied(false), 2000);
+  }, [chartRange, chartFrom, chartTo, stats, chartRecent.length]);
 
 
   const activeFilterCount = [
@@ -1706,6 +1756,18 @@ export function SpeedTest() {
                     <rect x="6" y="14" width="12" height="8" />
                   </svg>
                   {printing ? "Preparing…" : "Print Report"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleShareReport()}
+                  disabled={chartRecent.length === 0}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
+                  {reportCopied ? "Link copied!" : "Share report"}
                 </button>
 
 
