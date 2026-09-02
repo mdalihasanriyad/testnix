@@ -40,6 +40,21 @@ type RecentTest = {
 
 const RECENT_KEY = "testnix.recentTests";
 const MAX_RECENT = 5;
+const SCHEDULE_KEY = "testnix.scheduleMinutes";
+const SCHEDULE_OPTIONS = [
+  { value: 0, label: "Off" },
+  { value: 5, label: "Every 5 min" },
+  { value: 15, label: "Every 15 min" },
+  { value: 30, label: "Every 30 min" },
+  { value: 60, label: "Every hour" },
+];
+
+function formatCountdown(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 
 function loadRecent(): RecentTest[] {
   if (typeof window === "undefined") return [];
