@@ -1088,6 +1088,36 @@ export function SpeedTest() {
     }
   }, [chartRecent, stats, chartRange, chartFrom, chartTo]);
 
+  const handleShareReport = useCallback(async () => {
+    const rangeLabel =
+      chartRange === "all"
+        ? "All time"
+        : chartRange === "7d"
+          ? "Last 7 days"
+          : chartRange === "30d"
+            ? "Last 30 days"
+            : `${chartFrom || "start"} to ${chartTo || "now"}`;
+
+    const url = new URL(window.location.origin + "/");
+    url.searchParams.set("reportRange", chartRange);
+    if (chartRange === "custom") {
+      if (chartFrom) url.searchParams.set("reportFrom", chartFrom);
+      if (chartTo) url.searchParams.set("reportTo", chartTo);
+    }
+
+    const statsText = stats
+      ? `Download avg ${formatSpeed(stats.download.avg)} Mbps, Upload avg ${formatSpeed(stats.upload.avg)} Mbps, Ping avg ${Math.round(stats.ping.avg)} ms`
+      : `${chartRecent.length} test${chartRecent.length === 1 ? "" : "s"}`;
+
+    try {
+      await navigator.clipboard.writeText(`Testnix speed test report (${rangeLabel}): ${statsText}\n${url.toString()}`);
+    } catch {
+      window.prompt("Copy this report link:", url.toString());
+    }
+    setReportCopied(true);
+    setTimeout(() => setReportCopied(false), 2000);
+  }, [chartRange, chartFrom, chartTo, stats, chartRecent.length]);
+
 
   const activeFilterCount = [
     searchQuery.trim(),
