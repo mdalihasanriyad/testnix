@@ -495,6 +495,65 @@ export function SpeedTest() {
     setShowMore(true);
   }, []);
 
+  // ---- Scheduled (automatic) tests ----
+  const runTestRef = useRef(runTest);
+  runTestRef.current = runTest;
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(SCHEDULE_KEY);
+      if (saved) {
+        const mins = parseInt(saved, 10);
+        if (!Number.isNaN(mins) && SCHEDULE_OPTIONS.some((o) => o.value === mins)) {
+          setScheduleMinutes(mins);
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  const handleScheduleChange = useCallback((mins: number) => {
+    setScheduleMinutes(mins);
+    setNextRunAt(mins > 0 ? Date.now() + mins * 60_000 : null);
+    try {
+      window.localStorage.setItem(SCHEDULE_KEY, String(mins));
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  // Arm the countdown whenever a run finishes while scheduling is on.
+  useEffect(() => {
+    if (scheduleMinutes <= 0) {
+      setNextRunAt(null);
+      return;
+    }
+    if (phase === "done") {
+      setNextRunAt(Date.now() + scheduleMinutes * 60_000);
+    }
+  }, [scheduleMinutes, phase]);
+
+  // Tick the countdown and fire the scheduled run.
+  useEffect(() => {
+    if (scheduleMinutes <= 0 || nextRunAt === null) {
+      setSecondsToNext(null);
+      return;
+    }
+    const tick = () => {
+      const remaining = Math.max(0, Math.round((nextRunAt - Date.now()) / 1000));
+      setSecondsToNext(remaining);
+      if (remaining <= 0) {
+        setNextRunAt(null);
+        void runTestRef.current();
+      }
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [scheduleMinutes, nextRunAt]);
+
+
 
   useEffect(() => {
     if (startedRef.current) return;
