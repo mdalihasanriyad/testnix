@@ -503,6 +503,18 @@ export function SpeedTest() {
     const sharedSpeed = typeof search.speed === "string" ? parseFloat(search.speed) : null;
     const sharedUpload = typeof search.upload === "string" ? parseFloat(search.upload) : null;
     const sharedPing = typeof search.ping === "string" ? parseFloat(search.ping) : null;
+
+    // Apply a shared report time range (chart view) if present in the URL.
+    const sharedRange = typeof search.reportRange === "string" ? search.reportRange : null;
+    if (sharedRange && ["all", "7d", "30d", "custom"].includes(sharedRange)) {
+      setViewMode("chart");
+      setChartRange(sharedRange as "all" | "7d" | "30d" | "custom");
+      if (sharedRange === "custom") {
+        if (typeof search.reportFrom === "string") setChartFrom(search.reportFrom);
+        if (typeof search.reportTo === "string") setChartTo(search.reportTo);
+      }
+    }
+
     if (sharedSpeed && !Number.isNaN(sharedSpeed)) {
       fromSharedRef.current = true;
       setFinal(sharedSpeed);
