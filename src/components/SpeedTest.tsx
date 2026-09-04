@@ -1350,6 +1350,33 @@ export function SpeedTest() {
           </button>
         </div>
       )}
+
+      {/* Always-visible automatic test scheduler */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2 animate-fade-in">
+        <label htmlFor="schedule-interval" className="whitespace-nowrap text-xs font-medium text-neutral-500">
+          Auto-run
+        </label>
+        <select
+          id="schedule-interval"
+          value={scheduleMinutes}
+          onChange={(e) => handleScheduleChange(Number(e.target.value))}
+          className="rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-600 focus:border-neutral-900 focus:outline-none"
+          aria-label="Automatic speed test interval"
+        >
+          {SCHEDULE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+        {scheduleMinutes > 0 && (
+          <span className="text-xs text-neutral-400" aria-live="polite">
+            {phase !== "done"
+              ? "Next test starts after this run"
+              : secondsToNext !== null
+                ? `Next test in ${formatCountdown(secondsToNext)}`
+                : "Automatic tests on"}
+          </span>
+        )}
+      </div>
       {phase === "done" && final !== null && upload !== null && pingLoaded !== null && (
         <div className="mt-4 animate-fade-in">
           <button
