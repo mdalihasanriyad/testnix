@@ -1420,31 +1420,6 @@ export function SpeedTest() {
             >
               <span aria-hidden>⚙</span> Settings
             </button>
-            <div className="flex items-center gap-2">
-              <label htmlFor="schedule-interval" className="whitespace-nowrap text-xs text-neutral-500">
-                Auto-run
-              </label>
-              <select
-                id="schedule-interval"
-                value={scheduleMinutes}
-                onChange={(e) => handleScheduleChange(Number(e.target.value))}
-                className="rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-600 focus:border-neutral-900 focus:outline-none"
-                aria-label="Automatic speed test interval"
-              >
-                {SCHEDULE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </div>
-            {scheduleMinutes > 0 && (
-              <span className="w-full text-center text-xs text-neutral-400 sm:w-auto sm:text-left" aria-live="polite">
-                {phase !== "done"
-                  ? "Next test starts after this run"
-                  : secondsToNext !== null
-                    ? `Next test in ${formatCountdown(secondsToNext)}`
-                    : "Automatic tests on"}
-              </span>
-            )}
             <span className="tabular-nums">
               {downloadedMB > 0 ? `${downloadedMB.toFixed(0)}MB ↓` : ""}
             </span>
