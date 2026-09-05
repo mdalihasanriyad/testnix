@@ -575,6 +575,7 @@ export function SpeedTest() {
 
 
   useEffect(() => {
+    console.log("[debug] mount effect, started:", startedRef.current);
     if (startedRef.current) return;
     startedRef.current = true;
     fetchRecent();
@@ -743,9 +744,12 @@ export function SpeedTest() {
   const fetchRecent = useCallback(() => {
     setLoadingRecent(true);
     try {
-      setRecent(loadRecent());
+      const rows = loadRecent();
+      console.log("[debug] fetchRecent rows:", rows.length);
+      setRecent(rows);
       setRecentError(false);
-    } catch {
+    } catch (e) {
+      console.log("[debug] fetchRecent error", e);
       setRecentError(true);
     } finally {
       setLoadingRecent(false);
@@ -1219,7 +1223,10 @@ export function SpeedTest() {
 
   const showReload = phase === "done" && !extrasRunning;
 
+  console.log("[debug] render loadingRecent:", loadingRecent, "recent:", recent.length, "phase:", phase);
   return (
+    <>
+    <div id="dbg" data-lr={String(loadingRecent)} data-n={recent.length} data-ph={phase} className="hidden" />
     <section className="flex w-full max-w-5xl flex-col items-center px-4 text-center sm:px-6">
       <h2 className="fast-heading mb-1 text-neutral-900 sm:mb-2">
         {heading}
