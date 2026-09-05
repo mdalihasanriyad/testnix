@@ -1225,6 +1225,8 @@ export function SpeedTest() {
 
   console.log("[debug] render loadingRecent:", loadingRecent, "recent:", recent.length, "phase:", phase);
   return (
+    <>
+    <div id="dbg" data-lr={String(loadingRecent)} data-n={recent.length} data-ph={phase} className="hidden" />
     <section className="flex w-full max-w-5xl flex-col items-center px-4 text-center sm:px-6">
       <h2 className="fast-heading mb-1 text-neutral-900 sm:mb-2">
         {heading}
