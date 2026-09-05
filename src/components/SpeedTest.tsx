@@ -743,9 +743,12 @@ export function SpeedTest() {
   const fetchRecent = useCallback(() => {
     setLoadingRecent(true);
     try {
-      setRecent(loadRecent());
+      const rows = loadRecent();
+      console.log("[debug] fetchRecent rows:", rows.length);
+      setRecent(rows);
       setRecentError(false);
-    } catch {
+    } catch (e) {
+      console.log("[debug] fetchRecent error", e);
       setRecentError(true);
     } finally {
       setLoadingRecent(false);
