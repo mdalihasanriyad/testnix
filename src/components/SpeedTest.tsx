@@ -575,6 +575,7 @@ export function SpeedTest() {
 
 
   useEffect(() => {
+    console.log("[debug] mount effect, started:", startedRef.current);
     if (startedRef.current) return;
     startedRef.current = true;
     fetchRecent();
