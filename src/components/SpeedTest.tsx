@@ -67,7 +67,9 @@ function loadRecent(): RecentTest[] {
       r &&
       typeof r.download === "number" &&
       typeof r.upload === "number" &&
-      typeof r.ping === "number",
+      typeof r.ping === "number" &&
+      typeof r.at === "number" &&
+      Number.isFinite(r.at),
   );
 }
 
