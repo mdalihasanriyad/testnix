@@ -575,10 +575,9 @@ export function SpeedTest() {
 
 
   useEffect(() => {
-    console.log("[debug] mount effect, started:", startedRef.current);
     if (startedRef.current) return;
     startedRef.current = true;
-    fetchRecent();
+
 
     const sharedSpeed = typeof search.speed === "string" ? parseFloat(search.speed) : null;
     const sharedUpload = typeof search.upload === "string" ? parseFloat(search.upload) : null;
@@ -745,16 +744,20 @@ export function SpeedTest() {
     setLoadingRecent(true);
     try {
       const rows = loadRecent();
-      console.log("[debug] fetchRecent rows:", rows.length);
       setRecent(rows);
       setRecentError(false);
-    } catch (e) {
-      console.log("[debug] fetchRecent error", e);
+    } catch {
       setRecentError(true);
     } finally {
       setLoadingRecent(false);
     }
   }, []);
+
+  // Always load stored history on mount (independent of the single-run test guard),
+  // so the skeleton never stays stuck after a reload.
+  useEffect(() => {
+    fetchRecent();
+  }, [fetchRecent]);
 
   const handleRetryRecent = useCallback(() => {
     fetchRecent();
