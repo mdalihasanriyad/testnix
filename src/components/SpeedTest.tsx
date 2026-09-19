@@ -7,6 +7,8 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import SpeedAdvisor from "@/components/SpeedAdvisor";
+
 
 
 type Phase = "idle" | "ping" | "download" | "upload" | "done";
@@ -1466,6 +1468,12 @@ export function SpeedTest() {
           </div>
         </>
       )}
+
+      {phase === "done" && (
+        <SpeedAdvisor download={final} upload={upload} ping={pingLoaded ?? pingUnloaded} />
+      )}
+
+
 
       <div className="mt-12 w-full max-w-3xl animate-fade-in">
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
