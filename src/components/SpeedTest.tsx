@@ -7,6 +7,8 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import SpeedAdvisor from "@/components/SpeedAdvisor";
+
 
 
 type Phase = "idle" | "ping" | "download" | "upload" | "done";
@@ -1467,12 +1469,18 @@ export function SpeedTest() {
         </>
       )}
 
+      {phase === "done" && (
+        <SpeedAdvisor download={final} upload={upload} ping={pingLoaded ?? pingUnloaded} />
+      )}
+
+
+
       <div className="mt-12 w-full max-w-3xl animate-fade-in">
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-left text-lg font-bold text-neutral-900">
             Recent tests
           </h3>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {recent.length > 0 && !loadingRecent && (
               <>
                 <button
@@ -1962,7 +1970,7 @@ export function SpeedTest() {
           if (!open) setSelectedTest(null);
         }}
       >
-        <SheetContent className="sm:max-w-md">
+        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
           <SheetHeader>
             <SheetTitle>Test details</SheetTitle>
             <SheetDescription>
