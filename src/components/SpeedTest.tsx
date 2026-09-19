@@ -1480,7 +1480,7 @@ export function SpeedTest() {
           <h3 className="text-left text-lg font-bold text-neutral-900">
             Recent tests
           </h3>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {recent.length > 0 && !loadingRecent && (
               <>
                 <button
