@@ -1970,7 +1970,7 @@ export function SpeedTest() {
           if (!open) setSelectedTest(null);
         }}
       >
-        <SheetContent className="sm:max-w-md">
+        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
           <SheetHeader>
             <SheetTitle>Test details</SheetTitle>
             <SheetDescription>
