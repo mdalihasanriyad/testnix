@@ -14,7 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      public_results: {
+        Row: {
+          city: string | null
+          connection_type: string | null
+          created_at: string
+          device: string | null
+          download: number
+          factors: Json
+          id: string
+          issue: string | null
+          nickname: string | null
+          ping: number
+          plan_speed: string | null
+          steps: Json
+          summary: string
+          upload: number
+          verdict: string
+        }
+        Insert: {
+          city?: string | null
+          connection_type?: string | null
+          created_at?: string
+          device?: string | null
+          download: number
+          factors?: Json
+          id?: string
+          issue?: string | null
+          nickname?: string | null
+          ping: number
+          plan_speed?: string | null
+          steps?: Json
+          summary?: string
+          upload: number
+          verdict?: string
+        }
+        Update: {
+          city?: string | null
+          connection_type?: string | null
+          created_at?: string
+          device?: string | null
+          download?: number
+          factors?: Json
+          id?: string
+          issue?: string | null
+          nickname?: string | null
+          ping?: number
+          plan_speed?: string | null
+          steps?: Json
+          summary?: string
+          upload?: number
+          verdict?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
