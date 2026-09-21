@@ -8,6 +8,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import SpeedAdvisor from "@/components/SpeedAdvisor";
+import PublishToBoard from "@/components/PublishToBoard";
 
 
 
@@ -1470,7 +1471,10 @@ export function SpeedTest() {
       )}
 
       {phase === "done" && (
-        <SpeedAdvisor download={final} upload={upload} ping={pingLoaded ?? pingUnloaded} />
+        <>
+          <SpeedAdvisor download={final} upload={upload} ping={pingLoaded ?? pingUnloaded} />
+          <PublishToBoard download={final} upload={upload} ping={pingLoaded ?? pingUnloaded} />
+        </>
       )}
 
 
