@@ -44,8 +44,8 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <main className="flex min-h-screen flex-col bg-white text-neutral-900">
-      <header className="flex items-center justify-end px-6 py-5 text-sm text-neutral-600 md:px-10">
-        <nav aria-label="Primary" className="flex items-center gap-6">
+      <header className="flex items-center justify-end px-4 py-5 text-sm text-neutral-600 sm:px-6 md:px-10">
+        <nav aria-label="Primary" className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 sm:gap-6">
           <span>English (US)</span>
           <Link to="/board" className="hover:text-neutral-900">Community board</Link>
           <a href="/privacy" className="hover:text-neutral-900">Privacy</a>
