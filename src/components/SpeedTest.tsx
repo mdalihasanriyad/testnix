@@ -1238,16 +1238,16 @@ export function SpeedTest() {
         {heading}
       </h2>
 
-      <div className="flex items-start justify-center gap-2 sm:gap-4 md:gap-6">
+      <div className="flex max-w-full items-start justify-center gap-2 sm:gap-4 md:gap-6">
         <span
-          className="speed-number tabular-nums"
+          className="speed-number min-w-0 tabular-nums max-sm:text-[clamp(3.5rem,21vw,6.5rem)]"
           aria-live="polite"
           aria-atomic="true"
         >
           {formatSpeed(shownNumber)}
         </span>
-        <div className="flex flex-col items-start pt-[8%] sm:pt-[6%]">
-          <span className="mbps-label">Mbps</span>
+        <div className="flex shrink-0 flex-col items-start pt-[8%] sm:pt-[6%]">
+          <span className="mbps-label max-sm:text-2xl">Mbps</span>
           {isDownloading && (
             <span className="mt-4 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-[var(--testnix-red)]">
               <span className="flex gap-[4px]">
@@ -1734,16 +1734,16 @@ export function SpeedTest() {
               {Array.from({ length: 3 }).map((_, i) => (
                 <li
                   key={i}
-                  className="grid grid-cols-[1.5fr_1fr_1fr_1fr] items-center gap-2 px-4 py-3"
+                  className="grid grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))] items-center gap-2 px-3 py-3 sm:grid-cols-[1.5fr_1fr_1fr_1fr] sm:px-4"
                   aria-hidden="true"
                 >
                   <div className="flex flex-col gap-1.5">
-                    <span className="skeleton h-3.5 w-16 rounded" />
-                    <span className="skeleton h-3 w-24 rounded" />
+                    <span className="skeleton h-3.5 w-full max-w-16 rounded" />
+                    <span className="skeleton h-3 w-full max-w-24 rounded" />
                   </div>
-                  <span className="skeleton h-4 w-16 rounded" />
-                  <span className="skeleton h-4 w-16 rounded" />
-                  <span className="skeleton h-4 w-12 rounded" />
+                  <span className="skeleton h-4 w-full max-w-16 rounded" />
+                  <span className="skeleton h-4 w-full max-w-16 rounded" />
+                  <span className="skeleton h-4 w-full max-w-12 rounded" />
                 </li>
               ))}
             </ul>
@@ -1752,7 +1752,7 @@ export function SpeedTest() {
           viewMode === "chart" ? (
             <div className="rounded-md border border-neutral-200 bg-white p-4 animate-fade-in">
               {stats && (
-                <div className="mb-4 grid grid-cols-3 gap-3 border-b border-neutral-100 pb-4">
+                <div className="mb-4 grid grid-cols-1 gap-3 border-b border-neutral-100 pb-4 sm:grid-cols-3">
                   {[
                     { label: "Download", unit: "Mbps", key: "download" as const },
                     { label: "Upload", unit: "Mbps", key: "upload" as const },
@@ -1760,9 +1760,9 @@ export function SpeedTest() {
                   ].map(({ label, unit, key }) => {
                     const s = stats[key];
                     return (
-                      <div key={key} className="text-center">
-                        <p className="text-xs font-medium text-neutral-500">{label}</p>
-                        <div className="mt-1.5 flex items-center justify-center gap-2 text-xs">
+                      <div key={key} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-left sm:block sm:text-center">
+                        <p className="text-xs font-medium text-neutral-500">{label} <span className="font-normal text-neutral-400 sm:hidden">({unit})</span></p>
+                        <div className="flex items-center justify-end gap-4 text-xs sm:mt-1.5 sm:justify-center sm:gap-2">
                           <span className="flex flex-col items-center">
                             <span className="text-[10px] text-neutral-400">Min</span>
                             <span className="font-semibold tabular-nums text-neutral-900">
@@ -1782,14 +1782,14 @@ export function SpeedTest() {
                             </span>
                           </span>
                         </div>
-                        <p className="mt-0.5 text-[10px] text-neutral-400">{unit}</p>
+                        <p className="mt-0.5 hidden text-[10px] text-neutral-400 sm:block">{unit}</p>
                       </div>
                     );
                   })}
                 </div>
               )}
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <div className="inline-flex rounded-md border border-neutral-200 text-xs font-medium" role="group" aria-label="Chart time range">
+                <div className="flex w-full flex-wrap rounded-md border border-neutral-200 text-xs font-medium sm:w-auto" role="group" aria-label="Chart time range">
                   {([
                     ["all", "All"],
                     ["7d", "Last 7 days"],
@@ -1801,7 +1801,7 @@ export function SpeedTest() {
                       type="button"
                       onClick={() => setChartRange(val)}
                       aria-pressed={chartRange === val}
-                      className={`px-2.5 py-1.5 transition ${chartRange === val ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-50"}`}
+                      className={`flex-1 px-2.5 py-1.5 transition sm:flex-none ${chartRange === val ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-50"}`}
                     >
                       {label}
                     </button>
@@ -1931,7 +1931,7 @@ export function SpeedTest() {
                       setSelectedTest(r);
                     }
                   }}
-                  className="grid cursor-pointer grid-cols-[1.5fr_1fr_1fr_1fr] items-baseline gap-2 px-4 py-3 text-left text-sm transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                   className="grid cursor-pointer grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))] items-baseline gap-2 px-3 py-3 text-left text-sm transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:grid-cols-[1.5fr_1fr_1fr_1fr] sm:px-4"
                 >
                   <div className="flex flex-col">
                     <span className="text-xs text-neutral-500">
@@ -1945,17 +1945,17 @@ export function SpeedTest() {
                       {formatTimestamp(r.at)}
                     </time>
                   </div>
-                  <span className="tabular-nums text-neutral-900">
+                   <span className="min-w-0 tabular-nums text-neutral-900">
                     <span className="font-semibold">{formatSpeed(r.download)}</span>
-                    <span className="ml-1 text-xs text-neutral-400">↓ Mbps</span>
+                     <span className="block text-[10px] text-neutral-400 sm:ml-1 sm:inline sm:text-xs">↓ Mbps</span>
                   </span>
-                  <span className="tabular-nums text-neutral-900">
+                   <span className="min-w-0 tabular-nums text-neutral-900">
                     <span className="font-semibold">{formatSpeed(r.upload)}</span>
-                    <span className="ml-1 text-xs text-neutral-400">↑ Mbps</span>
+                     <span className="block text-[10px] text-neutral-400 sm:ml-1 sm:inline sm:text-xs">↑ Mbps</span>
                   </span>
-                  <span className="tabular-nums text-neutral-900">
+                   <span className="min-w-0 tabular-nums text-neutral-900">
                     <span className="font-semibold">{Math.round(r.ping)}</span>
-                    <span className="ml-1 text-xs text-neutral-400">ms</span>
+                     <span className="block text-[10px] text-neutral-400 sm:ml-1 sm:inline sm:text-xs">ms</span>
                   </span>
                 </li>
               ))}
@@ -1995,24 +1995,24 @@ export function SpeedTest() {
             </SheetDescription>
           </SheetHeader>
           {selectedTest && (
-            <div className="mt-2 grid grid-cols-3 gap-4 text-center">
-              <div className="rounded-lg border border-neutral-200 p-4">
+             <div className="mt-2 grid grid-cols-3 gap-2 text-center sm:gap-4">
+               <div className="min-w-0 rounded-lg border border-neutral-200 p-2 sm:p-4">
                 <p className="text-xs text-neutral-500">Download</p>
-                <p className="mt-1 text-2xl font-bold tabular-nums text-neutral-900">
+                 <p className="mt-1 text-base font-bold tabular-nums text-neutral-900 sm:text-2xl">
                   {formatSpeed(selectedTest.download)}
                 </p>
                 <p className="text-xs text-neutral-400">Mbps</p>
               </div>
-              <div className="rounded-lg border border-neutral-200 p-4">
+               <div className="min-w-0 rounded-lg border border-neutral-200 p-2 sm:p-4">
                 <p className="text-xs text-neutral-500">Upload</p>
-                <p className="mt-1 text-2xl font-bold tabular-nums text-neutral-900">
+                 <p className="mt-1 text-base font-bold tabular-nums text-neutral-900 sm:text-2xl">
                   {formatSpeed(selectedTest.upload)}
                 </p>
                 <p className="text-xs text-neutral-400">Mbps</p>
               </div>
-              <div className="rounded-lg border border-neutral-200 p-4">
+               <div className="min-w-0 rounded-lg border border-neutral-200 p-2 sm:p-4">
                 <p className="text-xs text-neutral-500">Ping</p>
-                <p className="mt-1 text-2xl font-bold tabular-nums text-neutral-900">
+                 <p className="mt-1 text-base font-bold tabular-nums text-neutral-900 sm:text-2xl">
                   {Math.round(selectedTest.ping)}
                 </p>
                 <p className="text-xs text-neutral-400">ms</p>

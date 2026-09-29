@@ -84,7 +84,7 @@ function Board() {
       </p>
 
       {entries.length > 0 && (
-        <div className="mt-6 grid grid-cols-3 gap-3">
+         <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
           {(
             [
               ["Avg download", `${avg("download").toFixed(1)} Mbps`],
@@ -92,9 +92,9 @@ function Board() {
               ["Avg ping", `${Math.round(avg("ping"))} ms`],
             ] as const
           ).map(([label, value]) => (
-            <div key={label} className="rounded-lg border border-neutral-200 p-3">
+             <div key={label} className="min-w-0 rounded-lg border border-neutral-200 p-2 sm:p-3">
               <p className="text-xs text-neutral-500">{label}</p>
-              <p className="mt-1 text-lg font-bold tabular-nums">{value}</p>
+               <p className="mt-1 break-words text-sm font-bold tabular-nums sm:text-lg">{value}</p>
             </div>
           ))}
         </div>
@@ -115,7 +115,7 @@ function Board() {
           {entries.map((entry) => (
             <li key={entry.id} className="rounded-lg border border-neutral-200 p-4 sm:p-6">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="font-bold text-neutral-900">
+                 <p className="min-w-0 break-words font-bold text-neutral-900">
                   {entry.nickname || "Anonymous"}
                   {entry.city ? <span className="font-normal text-neutral-500"> · {entry.city}</span> : null}
                 </p>
