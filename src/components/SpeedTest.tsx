@@ -650,7 +650,6 @@ export function SpeedTest() {
       }
       return next;
     });
-    setSelectedTest(entry);
   }, [phase, final, upload, pingLoaded]);
 
   // Dynamically import the chart component only on the client to avoid SSR issues.
