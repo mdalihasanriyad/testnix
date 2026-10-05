@@ -275,6 +275,8 @@ export function SpeedTest() {
   const [chartTo, setChartTo] = useState("");
   const [exportingPng, setExportingPng] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [emailTo, setEmailTo] = useState("");
+  const [emailNote, setEmailNote] = useState<string | null>(null);
   const [printing, setPrinting] = useState(false);
   const [reportCopied, setReportCopied] = useState(false);
   const [scheduleMinutes, setScheduleMinutes] = useState(0);
@@ -861,7 +863,7 @@ export function SpeedTest() {
     }
   }, []);
 
-  const handleExportPdf = useCallback(async () => {
+  const handleExportPdf = useCallback(async (emailTo?: string) => {
     if (chartRecent.length === 0 || !stats) return;
     setExportingPdf(true);
     try {
@@ -1016,9 +1018,29 @@ export function SpeedTest() {
       doc.setTextColor(160);
       doc.text("Generated with Testnix.net — free internet speed test", margin, 812);
 
-      doc.save(`testnix-report-${new Date().toISOString().slice(0, 10)}.pdf`);
+      const fileName = `testnix-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+      if (emailTo === undefined) {
+        doc.save(fileName);
+        return;
+      }
+      const subject = "Testnix speed test report";
+      const body = `Hi,\n\nAttached is my Testnix speed test report (${fileName}).\nAverage: ${formatSpeed(stats.download.avg)} Mbps down, ${formatSpeed(stats.upload.avg)} Mbps up, ${Math.round(stats.ping.avg)} ms ping.\n\nSent from Testnix.net`;
+      const file = new File([doc.output("blob")], fileName, { type: "application/pdf" });
+      const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
+      if (nav.canShare?.({ files: [file] }) && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+        try {
+          await navigator.share({ files: [file], title: subject, text: body });
+          setEmailNote("Pick your email app in the share menu to send the PDF.");
+          return;
+        } catch {
+          /* fall back to download + mail app */
+        }
+      }
+      doc.save(fileName);
+      window.location.href = `mailto:${encodeURIComponent(emailTo.trim())}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      setEmailNote(`PDF saved as ${fileName}. Attach it in the email that just opened, then press send.`);
     } catch {
-      /* ignore export failure */
+      setEmailNote("We couldn't build the PDF. Please try again.");
     } finally {
       setExportingPdf(false);
     }
