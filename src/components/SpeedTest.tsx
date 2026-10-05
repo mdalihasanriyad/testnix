@@ -275,6 +275,8 @@ export function SpeedTest() {
   const [chartTo, setChartTo] = useState("");
   const [exportingPng, setExportingPng] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [emailTo, setEmailTo] = useState("");
+  const [emailNote, setEmailNote] = useState<string | null>(null);
   const [printing, setPrinting] = useState(false);
   const [reportCopied, setReportCopied] = useState(false);
   const [scheduleMinutes, setScheduleMinutes] = useState(0);
@@ -861,7 +863,7 @@ export function SpeedTest() {
     }
   }, []);
 
-  const handleExportPdf = useCallback(async () => {
+  const handleExportPdf = useCallback(async (emailTo?: string) => {
     if (chartRecent.length === 0 || !stats) return;
     setExportingPdf(true);
     try {
@@ -1016,9 +1018,29 @@ export function SpeedTest() {
       doc.setTextColor(160);
       doc.text("Generated with Testnix.net — free internet speed test", margin, 812);
 
-      doc.save(`testnix-report-${new Date().toISOString().slice(0, 10)}.pdf`);
+      const fileName = `testnix-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+      if (emailTo === undefined) {
+        doc.save(fileName);
+        return;
+      }
+      const subject = "Testnix speed test report";
+      const body = `Hi,\n\nAttached is my Testnix speed test report (${fileName}).\nAverage: ${formatSpeed(stats.download.avg)} Mbps down, ${formatSpeed(stats.upload.avg)} Mbps up, ${Math.round(stats.ping.avg)} ms ping.\n\nSent from Testnix.net`;
+      const file = new File([doc.output("blob")], fileName, { type: "application/pdf" });
+      const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
+      if (nav.canShare?.({ files: [file] }) && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+        try {
+          await navigator.share({ files: [file], title: subject, text: body });
+          setEmailNote("Pick your email app in the share menu to send the PDF.");
+          return;
+        } catch {
+          /* fall back to download + mail app */
+        }
+      }
+      doc.save(fileName);
+      window.location.href = `mailto:${encodeURIComponent(emailTo.trim())}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      setEmailNote(`PDF saved as ${fileName}. Attach it in the email that just opened, then press send.`);
     } catch {
-      /* ignore export failure */
+      setEmailNote("We couldn't build the PDF. Please try again.");
     } finally {
       setExportingPdf(false);
     }
@@ -1859,7 +1881,7 @@ export function SpeedTest() {
                 </button>
                 <button
                   type="button"
-                  onClick={handleExportPdf}
+                  onClick={() => void handleExportPdf()}
                   disabled={chartRecent.length === 0 || !ChartComponent || exportingPdf}
                   className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -1870,6 +1892,37 @@ export function SpeedTest() {
                   </svg>
                   {exportingPdf ? "Building PDF…" : "Export PDF"}
                 </button>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void handleExportPdf(emailTo);
+                  }}
+                  className="flex w-full basis-full flex-wrap items-center gap-2 sm:w-auto sm:basis-auto"
+                >
+                  <input
+                    type="email"
+                    required
+                    value={emailTo}
+                    onChange={(e) => setEmailTo(e.target.value)}
+                    placeholder="name@example.com"
+                    aria-label="Email address for the PDF report"
+                    className="min-w-0 flex-1 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs text-neutral-700 focus:border-neutral-900 focus:outline-none sm:w-48 sm:flex-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={chartRecent.length === 0 || !ChartComponent || exportingPdf}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect x="2" y="4" width="20" height="16" rx="2" />
+                      <path d="m22 7-10 6L2 7" />
+                    </svg>
+                    Email PDF
+                  </button>
+                  {emailNote && (
+                    <p className="w-full basis-full text-xs text-neutral-500" role="status">{emailNote}</p>
+                  )}
+                </form>
                 <button
                   type="button"
                   onClick={() => void handlePrintReport()}
