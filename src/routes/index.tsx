@@ -48,6 +48,7 @@ function Index() {
         <nav aria-label="Primary" className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 sm:gap-6">
           <span>English (US)</span>
           <Link to="/board" className="hover:text-neutral-900">Community board</Link>
+          <Link to="/inbox" className="hover:text-neutral-900">Report inbox</Link>
           <a href="/privacy" className="hover:text-neutral-900">Privacy</a>
         </nav>
       </header>
