@@ -130,6 +130,11 @@ function Board() {
                 {entry.device && <span className="text-neutral-400">{entry.device}</span>}
               </div>
 
+              <p className="mt-3 rounded-md bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+                <span className="font-semibold text-neutral-800">Testnix speed test report</span>
+                {" — "}Download {entry.download.toFixed(1)} Mbps · Upload {entry.upload.toFixed(1)} Mbps · Ping {Math.round(entry.ping)} ms
+              </p>
+
               {entry.verdict && (
                 <p className="mt-4 text-base font-bold text-neutral-900">{entry.verdict}</p>
               )}
