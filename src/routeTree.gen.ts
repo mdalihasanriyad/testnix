@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BoardRouteImport } from './routes/board'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as ResultsRouteImport } from './routes/results'
+import { Route as ScheduleRouteImport } from './routes/schedule'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiDownloadTestRouteImport } from './routes/api/download-test'
 import { Route as ApiPingRouteImport } from './routes/api/ping'
@@ -37,6 +38,11 @@ const ResultsRoute = ResultsRouteImport.update({
   path: '/results',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ScheduleRoute = ScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/board': typeof BoardRoute
   '/inbox': typeof InboxRoute
   '/results': typeof ResultsRoute
+  '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/download-test': typeof ApiDownloadTestRoute
   '/api/ping': typeof ApiPingRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/board': typeof BoardRoute
   '/inbox': typeof InboxRoute
   '/results': typeof ResultsRoute
+  '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/download-test': typeof ApiDownloadTestRoute
   '/api/ping': typeof ApiPingRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/board': typeof BoardRoute
   '/inbox': typeof InboxRoute
   '/results': typeof ResultsRoute
+  '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/download-test': typeof ApiDownloadTestRoute
   '/api/ping': typeof ApiPingRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/board'
     | '/inbox'
     | '/results'
+    | '/schedule'
     | '/sitemap.xml'
     | '/api/download-test'
     | '/api/ping'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/board'
     | '/inbox'
     | '/results'
+    | '/schedule'
     | '/sitemap.xml'
     | '/api/download-test'
     | '/api/ping'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/board'
     | '/inbox'
     | '/results'
+    | '/schedule'
     | '/sitemap.xml'
     | '/api/download-test'
     | '/api/ping'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   BoardRoute: typeof BoardRoute
   InboxRoute: typeof InboxRoute
   ResultsRoute: typeof ResultsRoute
+  ScheduleRoute: typeof ScheduleRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiDownloadTestRoute: typeof ApiDownloadTestRoute
   ApiPingRoute: typeof ApiPingRoute
@@ -151,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResultsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/schedule': {
+      id: '/schedule'
+      path: '/schedule'
+      fullPath: '/schedule'
+      preLoaderRoute: typeof ScheduleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   BoardRoute: BoardRoute,
   InboxRoute: InboxRoute,
   ResultsRoute: ResultsRoute,
+  ScheduleRoute: ScheduleRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiDownloadTestRoute: ApiDownloadTestRoute,
   ApiPingRoute: ApiPingRoute,
