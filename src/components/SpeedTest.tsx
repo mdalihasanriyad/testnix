@@ -579,6 +579,19 @@ export function SpeedTest() {
     return () => clearInterval(id);
   }, [scheduleMinutes, nextRunAt]);
 
+  // Fire tests at the set times from the Scheduled tests page.
+  useEffect(() => {
+    const check = async () => {
+      const { readSchedule, dueSlot, LAST_FIRED_KEY } = await import("@/lib/schedule-times");
+      const slot = dueSlot(readSchedule(), new Date());
+      if (!slot || window.localStorage.getItem(LAST_FIRED_KEY) === slot) return;
+      window.localStorage.setItem(LAST_FIRED_KEY, slot);
+      void runTestRef.current();
+    };
+    const id = setInterval(() => void check(), 15_000);
+    void check();
+    return () => clearInterval(id);
+  }, []);
 
 
   useEffect(() => {

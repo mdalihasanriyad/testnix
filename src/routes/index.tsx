@@ -49,6 +49,7 @@ function Index() {
           <span>English (US)</span>
           <Link to="/board" className="hover:text-neutral-900">Community board</Link>
           <Link to="/inbox" className="hover:text-neutral-900">Report inbox</Link>
+          <Link to="/schedule" className="hover:text-neutral-900">Scheduled tests</Link>
           <a href="/privacy" className="hover:text-neutral-900">Privacy</a>
         </nav>
       </header>
