@@ -9,6 +9,14 @@ import {
 } from "@/components/ui/sheet";
 import SpeedAdvisor from "@/components/SpeedAdvisor";
 import PublishToBoard from "@/components/PublishToBoard";
+import { getDeviceKey } from "@/lib/device-key";
+import {
+  clearSpeedResults,
+  listSpeedResults,
+  mergeSpeedResults,
+  saveSpeedResult,
+  type SpeedResultRow,
+} from "@/lib/speed-results.functions";
 
 
 
@@ -43,6 +51,7 @@ type RecentTest = {
 
 const RECENT_KEY = "testnix.recentTests";
 const MAX_RECENT = 5;
+const MAX_STORED = 50;
 const SCHEDULE_KEY = "testnix.scheduleMinutes";
 const SCHEDULE_OPTIONS = [
   { value: 0, label: "Off" },
@@ -657,13 +666,27 @@ export function SpeedTest() {
       at: Date.now(),
     };
     setRecent((prev) => {
-      const next = [entry, ...prev].slice(0, MAX_RECENT);
+      const next = [entry, ...prev]
+        .sort((a, b) => b.at - a.at)
+        .slice(0, MAX_STORED);
       try {
         window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
       } catch {
         // ignore quota errors
       }
       return next;
+    });
+    // Also save to the cloud so the result survives reloads and cleared browser data.
+    saveSpeedResult({
+      data: {
+        deviceKey: getDeviceKey(),
+        download: entry.download,
+        upload: entry.upload,
+        ping: entry.ping,
+        at: entry.at,
+      },
+    }).catch(() => {
+      // Kept locally; it will be uploaded on the next history load.
     });
   }, [phase, final, upload, pingLoaded]);
 
@@ -756,16 +779,50 @@ export function SpeedTest() {
       // ignore
     }
     setRecent([]);
+    clearSpeedResults({ data: { deviceKey: getDeviceKey() } }).catch(() => {
+      // Cloud copy cleared on the next successful history load if this fails.
+    });
   }, []);
 
 
-  const fetchRecent = useCallback(() => {
+  const fetchRecent = useCallback(async () => {
     setLoadingRecent(true);
     try {
-      const rows = loadRecent();
-      setRecent(rows);
+      const deviceKey = getDeviceKey();
+      const localRows = loadRecent();
+      const serverRows = await listSpeedResults({ data: { deviceKey } });
+      const known = new Set(serverRows.map((r) => new Date(r.at).getTime()));
+      const pendingUploads = localRows
+        .filter((r) => !known.has(r.at))
+        .map((r) => ({ download: r.download, upload: r.upload, ping: r.ping, at: r.at }));
+      if (pendingUploads.length > 0) {
+        await mergeSpeedResults({ data: { deviceKey, rows: pendingUploads } });
+      }
+      const cloudOnly: RecentTest[] = serverRows.map((row: SpeedResultRow) => ({
+        id: row.id,
+        download: row.download,
+        upload: row.upload,
+        ping: row.ping,
+        at: new Date(row.at).getTime(),
+      }));
+      const uploadedLocally: RecentTest[] = localRows.filter((r) =>
+        pendingUploads.some((p) => p.at === r.at),
+      );
+      const merged = [...uploadedLocally, ...cloudOnly].sort((a, b) => b.at - a.at);
+      try {
+        window.localStorage.setItem(RECENT_KEY, JSON.stringify(merged.slice(0, MAX_STORED)));
+      } catch {
+        // ignore quota errors
+      }
+      setRecent(merged);
       setRecentError(false);
     } catch {
+      // Offline or cloud unavailable: show what this browser still has.
+      try {
+        setRecent(loadRecent());
+      } catch {
+        setRecent([]);
+      }
       setRecentError(true);
     } finally {
       setLoadingRecent(false);

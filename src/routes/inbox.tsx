@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { getDeviceKey } from "@/lib/device-key";
+import { listSpeedResults, type SpeedResultRow } from "@/lib/speed-results.functions";
 
 const TITLE = "Report inbox — Testnix";
 const DESCRIPTION = "See every Testnix speed test report as it arrives, with subject, summary and PDF download.";
@@ -57,9 +59,26 @@ function InboxPage() {
   const [open, setOpen] = useState<string | null>(null);
 
   useEffect(() => {
-    const load = () => setRuns(read().sort((a, b) => b.at - a.at));
-    load();
-    const t = window.setInterval(load, 5000);
+    const load = async () => {
+      try {
+        const rows = await listSpeedResults({ data: { deviceKey: getDeviceKey() } });
+        setRuns(
+          rows
+            .map((r: SpeedResultRow) => ({
+              id: r.id,
+              download: r.download,
+              upload: r.upload,
+              ping: r.ping,
+              at: new Date(r.at).getTime(),
+            }))
+            .sort((a, b) => b.at - a.at),
+        );
+      } catch {
+        setRuns(read().sort((a, b) => b.at - a.at));
+      }
+    };
+    void load();
+    const t = window.setInterval(() => void load(), 5000);
     window.addEventListener("storage", load);
     return () => {
       window.clearInterval(t);

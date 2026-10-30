@@ -68,6 +68,36 @@ export type Database = {
         }
         Relationships: []
       }
+      speed_results: {
+        Row: {
+          at: string
+          created_at: string
+          device_key: string
+          download: number
+          id: string
+          ping: number
+          upload: number
+        }
+        Insert: {
+          at?: string
+          created_at?: string
+          device_key: string
+          download: number
+          id?: string
+          ping: number
+          upload: number
+        }
+        Update: {
+          at?: string
+          created_at?: string
+          device_key?: string
+          download?: number
+          id?: string
+          ping?: number
+          upload?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
