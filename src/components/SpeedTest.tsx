@@ -51,6 +51,7 @@ type RecentTest = {
 
 const RECENT_KEY = "testnix.recentTests";
 const MAX_RECENT = 5;
+const MAX_STORED = 50;
 const SCHEDULE_KEY = "testnix.scheduleMinutes";
 const SCHEDULE_OPTIONS = [
   { value: 0, label: "Off" },
@@ -778,6 +779,9 @@ export function SpeedTest() {
       // ignore
     }
     setRecent([]);
+    clearSpeedResults({ data: { deviceKey: getDeviceKey() } }).catch(() => {
+      // Cloud copy cleared on the next successful history load if this fails.
+    });
   }, []);
 
 
