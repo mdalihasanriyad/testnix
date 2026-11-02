@@ -596,10 +596,11 @@ export function SpeedTest() {
   // Fire tests at the set times from the Scheduled tests page.
   useEffect(() => {
     const check = async () => {
-      const { readSchedule, dueSlot, LAST_FIRED_KEY } = await import("@/lib/schedule-times");
+      const { dueSlot } = await import("@/lib/schedule-times");
       const slot = dueSlot(readSchedule(), new Date());
       if (!slot || window.localStorage.getItem(LAST_FIRED_KEY) === slot) return;
       window.localStorage.setItem(LAST_FIRED_KEY, slot);
+      scheduledRunRef.current = true;
       void runTestRef.current();
     };
     const id = setInterval(() => void check(), 15_000);
