@@ -10,6 +10,7 @@ import {
 import SpeedAdvisor from "@/components/SpeedAdvisor";
 import PublishToBoard from "@/components/PublishToBoard";
 import { getDeviceKey } from "@/lib/device-key";
+import { LAST_FIRED_KEY, readSchedule } from "@/lib/schedule-times";
 import {
   clearSpeedResults,
   listSpeedResults,
@@ -286,6 +287,10 @@ export function SpeedTest() {
   const [exportingPdf, setExportingPdf] = useState(false);
   const [emailTo, setEmailTo] = useState("");
   const [emailNote, setEmailNote] = useState<string | null>(null);
+  const scheduledRunRef = useRef(false);
+  const [scheduledEmailPending, setScheduledEmailPending] = useState<string | null>(null);
+  const [scheduledEmailPrompt, setScheduledEmailPrompt] = useState<string | null>(null);
+  const handleExportPdfRef = useRef<((emailTo?: string) => Promise<void>) | null>(null);
   const [printing, setPrinting] = useState(false);
   const [reportCopied, setReportCopied] = useState(false);
   const [scheduleMinutes, setScheduleMinutes] = useState(0);
@@ -591,10 +596,11 @@ export function SpeedTest() {
   // Fire tests at the set times from the Scheduled tests page.
   useEffect(() => {
     const check = async () => {
-      const { readSchedule, dueSlot, LAST_FIRED_KEY } = await import("@/lib/schedule-times");
+      const { dueSlot } = await import("@/lib/schedule-times");
       const slot = dueSlot(readSchedule(), new Date());
       if (!slot || window.localStorage.getItem(LAST_FIRED_KEY) === slot) return;
       window.localStorage.setItem(LAST_FIRED_KEY, slot);
+      scheduledRunRef.current = true;
       void runTestRef.current();
     };
     const id = setInterval(() => void check(), 15_000);
