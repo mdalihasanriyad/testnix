@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { getDeviceKey } from "@/lib/device-key";
 import { listSpeedResults, type SpeedResultRow } from "@/lib/speed-results.functions";
+import { readSchedule } from "@/lib/schedule-times";
+import { openReportDraft } from "@/lib/report-email";
 
 const TITLE = "Report inbox — Testnix";
 const DESCRIPTION = "See every Testnix speed test report as it arrives, with subject, summary and PDF download.";
@@ -57,6 +59,7 @@ async function downloadPdf(r: Run) {
 function InboxPage() {
   const [runs, setRuns] = useState<Run[] | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [emailNote, setEmailNote] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -127,6 +130,23 @@ function InboxPage() {
                   >
                     Download PDF
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const recipient = readSchedule().email.trim();
+                      if (!recipient) {
+                        setEmailNote("Add your email on the Scheduled tests page first.");
+                        return;
+                      }
+                      void openReportDraft(r, recipient)
+                        .then(({ fileName }) => setEmailNote(`Downloaded ${fileName}; attach it to the draft and press Send.`))
+                        .catch(() => setEmailNote("The email draft could not be opened. Please try again."));
+                    }}
+                    className="ml-2 mt-3 rounded-lg border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
+                  >
+                    Open email draft
+                  </button>
+                  {emailNote && <p className="mt-2 text-xs text-neutral-500" role="status">{emailNote}</p>}
                 </div>
               )}
             </li>

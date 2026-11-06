@@ -11,6 +11,7 @@ import SpeedAdvisor from "@/components/SpeedAdvisor";
 import PublishToBoard from "@/components/PublishToBoard";
 import { getDeviceKey } from "@/lib/device-key";
 import { LAST_FIRED_KEY, readSchedule } from "@/lib/schedule-times";
+import { openReportDraft, type ReportEmailData } from "@/lib/report-email";
 import {
   clearSpeedResults,
   listSpeedResults,
@@ -288,9 +289,8 @@ export function SpeedTest() {
   const [emailTo, setEmailTo] = useState("");
   const [emailNote, setEmailNote] = useState<string | null>(null);
   const scheduledRunRef = useRef(false);
-  const [scheduledEmailPending, setScheduledEmailPending] = useState<string | null>(null);
-  const [scheduledEmailPrompt, setScheduledEmailPrompt] = useState<string | null>(null);
-  const handleExportPdfRef = useRef<((emailTo?: string) => Promise<void>) | null>(null);
+  const [scheduledEmailPending, setScheduledEmailPending] = useState<ReportEmailData | null>(null);
+  const [scheduledEmailNote, setScheduledEmailNote] = useState<string | null>(null);
   const [printing, setPrinting] = useState(false);
   const [reportCopied, setReportCopied] = useState(false);
   const [scheduleMinutes, setScheduleMinutes] = useState(0);
@@ -694,6 +694,22 @@ export function SpeedTest() {
     }).catch(() => {
       // Kept locally; it will be uploaded on the next history load.
     });
+  }, [phase, final, upload, pingLoaded]);
+
+  useEffect(() => {
+    if (phase !== "done" || !scheduledRunRef.current || final === null || upload === null || pingLoaded === null) return;
+    scheduledRunRef.current = false;
+    const report = { download: final, upload, ping: pingLoaded, at: Date.now() };
+    setScheduledEmailPending(report);
+    setScheduledEmailNote(null);
+    const recipient = readSchedule().email.trim();
+    if (!recipient) {
+      setScheduledEmailNote("Add your email on the Scheduled tests page, then use Open email draft.");
+      return;
+    }
+    void openReportDraft(report, recipient)
+      .then(({ fileName }) => setScheduledEmailNote(`Downloaded ${fileName}; attach it to the draft and press Send.`))
+      .catch(() => setScheduledEmailNote("The draft could not open automatically. Use Open email draft to try again."));
   }, [phase, final, upload, pingLoaded]);
 
   // Dynamically import the chart component only on the client to avoid SSR issues.
@@ -1487,6 +1503,27 @@ export function SpeedTest() {
           </span>
         )}
       </div>
+      {phase === "done" && scheduledEmailPending && (
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-3 animate-fade-in">
+          <button
+            type="button"
+            onClick={() => {
+              const recipient = readSchedule().email.trim();
+              if (!recipient) {
+                setScheduledEmailNote("Add your email on the Scheduled tests page first.");
+                return;
+              }
+              void openReportDraft(scheduledEmailPending, recipient)
+                .then(({ fileName }) => setScheduledEmailNote(`Downloaded ${fileName}; attach it to the draft and press Send.`))
+                .catch(() => setScheduledEmailNote("The email draft could not be opened. Please try again."));
+            }}
+            className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
+          >
+            Open email draft
+          </button>
+          {scheduledEmailNote && <p className="basis-full text-center text-xs text-neutral-500" role="status">{scheduledEmailNote}</p>}
+        </div>
+      )}
       {phase === "done" && final !== null && upload !== null && pingLoaded !== null && (
         <div className="mt-4 animate-fade-in">
           <button
