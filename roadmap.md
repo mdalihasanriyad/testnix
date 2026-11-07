@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Publish the app so Scheduled tests and Report inbox are available on a real URL
+- [ ] Connect the user's custom domain and configure automatic scheduled report emails with PDF links (requires domain setup and a verified email sender domain)
 - [x] Public community board: visitors publish speed results with AI explanation
 - [x] Speed results stored in the cloud database (survive reload and cleared browser data); Report inbox reads from the cloud
 - [ ] Scheduled test emails the PDF report to the user's inbox (blocked: no sending domain configured)
