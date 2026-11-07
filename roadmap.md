@@ -9,5 +9,6 @@
 - [x] Verify scheduled test flow: add a time, run a test, confirm it appears in the Report inbox with correct speeds
 - [ ] Scheduled tests create/download a PDF and open a saved-address email draft with a retry button
 - [ ] Scheduled tests page can open a draft for the latest report; Report inbox can open a draft for each report
+- [ ] Run a scheduled test and verify the draft opens in the user's real email app with the PDF attached
 - [ ] After sending domain connects, send scheduled reports directly to the saved address
 - [ ] After domain connects: scheduled tests email the report to the saved address with the PDF download link
