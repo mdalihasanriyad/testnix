@@ -75,6 +75,7 @@ export type Database = {
           device_key: string
           download: number
           id: string
+          owner_id: string | null
           ping: number
           upload: number
         }
@@ -84,6 +85,7 @@ export type Database = {
           device_key: string
           download: number
           id?: string
+          owner_id?: string | null
           ping: number
           upload: number
         }
@@ -93,6 +95,7 @@ export type Database = {
           device_key?: string
           download?: number
           id?: string
+          owner_id?: string | null
           ping?: number
           upload?: number
         }
