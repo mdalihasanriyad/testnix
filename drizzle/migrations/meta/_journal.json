@@ -15,6 +15,13 @@
       "when": 1794242931048,
       "tag": "0001_secure_anonymous_speed_result_access",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794243118376,
+      "tag": "0002_restrict_direct_public_result_table_access",
+      "breakpoints": true
     }
   ]
 }
