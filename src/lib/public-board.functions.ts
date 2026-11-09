@@ -39,23 +39,8 @@ function toStringArray(value: unknown): string[] {
 
 export const listBoardEntries = createServerFn({ method: "GET" }).handler(
   async (): Promise<BoardEntry[]> => {
-    const { createClient } = await import("@supabase/supabase-js");
-    const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-    const supabasePublic = createClient(process.env["SUPABASE_URL"]!, key, {
-      auth: { persistSession: false, autoRefreshToken: false },
-      global: {
-        fetch: (input: RequestInfo | URL, init?: RequestInit) => {
-          const h = new Headers(init?.headers);
-          if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) {
-            h.delete("Authorization");
-          }
-          h.set("apikey", key);
-          return fetch(input, { ...init, headers: h });
-        },
-      },
-    });
-
-    const { data, error } = await supabasePublic
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("public_results")
       .select(
         "id, nickname, city, connection_type, device, plan_speed, issue, download, upload, ping, verdict, summary, factors, steps, created_at",
