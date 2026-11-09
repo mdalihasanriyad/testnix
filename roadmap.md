@@ -11,4 +11,4 @@
 - [ ] Scheduled tests page can open a draft for the latest report; Report inbox can open a draft for each report
 - [ ] Verify a real email-app draft with the PDF attached (blocked: browser email drafts cannot attach downloaded files automatically; this check had no saved recipient)
 - [ ] After sending domain connects, send scheduled reports directly to the saved address
-- [ ] After domain connects: scheduled tests email the report to the saved address with the PDF download link
+- [ ] Once the sender domain is verified, scheduled tests email the saved address with the report subject and PDF download link
