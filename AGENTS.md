@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Keep single-test PDF generation and prefilled email-draft creation in `src/lib/report-email.ts` so scheduled, inbox, and schedule-page actions share one report format.
+- Keep speed-result persistence in `src/lib/speed-results.functions.ts` and scope every query to the server-issued owner cookie, never the caller-supplied device key, to protect private browser history.
