@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getDeviceKey } from "@/lib/device-key";
 import { listSpeedResults, type SpeedResultRow } from "@/lib/speed-results.functions";
 import { readSchedule } from "@/lib/schedule-times";
-import { openReportDraft } from "@/lib/report-email";
+import { downloadReportPdf, openReportDraft, REPORT_EMAIL_SUBJECT, reportEmailSummary } from "@/lib/report-email";
 
 const TITLE = "Report inbox — Testnix";
 const DESCRIPTION = "See every Testnix speed test report as it arrives, with subject, summary and PDF download.";
@@ -25,7 +25,6 @@ export const Route = createFileRoute("/inbox")({
 
 type Run = { id: string; download: number; upload: number; ping: number; at: number };
 const KEY = "testnix.recentTests";
-const SUBJECT = "Testnix speed test report";
 
 function read(): Run[] {
   try {
@@ -36,24 +35,6 @@ function read(): Run[] {
   } catch {
     return [];
   }
-}
-
-function summary(r: Run) {
-  return `Download ${r.download.toFixed(1)} Mbps · Upload ${r.upload.toFixed(1)} Mbps · Ping ${Math.round(r.ping)} ms`;
-}
-
-async function downloadPdf(r: Run) {
-  const { jsPDF } = await import("jspdf");
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
-  doc.setFontSize(20);
-  doc.text(SUBJECT, 48, 72);
-  doc.setFontSize(11);
-  doc.text(new Date(r.at).toLocaleString(), 48, 96);
-  doc.setFontSize(14);
-  doc.text(`Download: ${r.download.toFixed(1)} Mbps`, 48, 140);
-  doc.text(`Upload: ${r.upload.toFixed(1)} Mbps`, 48, 164);
-  doc.text(`Ping: ${Math.round(r.ping)} ms`, 48, 188);
-  doc.save(`testnix-report-${new Date(r.at).toISOString().slice(0, 10)}.pdf`);
 }
 
 function InboxPage() {
@@ -96,7 +77,7 @@ function InboxPage() {
         <Link to="/" className="text-sm font-semibold text-[var(--testnix-red)] hover:underline">← Back to test</Link>
       </div>
       <p className="mt-2 text-sm text-neutral-500">
-        Each finished test (including scheduled runs) lands here with the same subject and summary as the emailed PDF. Updates live while open.
+        Each finished test (including scheduled runs) lands here with the same subject and summary as the report PDF. Updates live while open.
       </p>
 
       {runs === null ? (
@@ -115,17 +96,17 @@ function InboxPage() {
                 className="flex w-full flex-col gap-1 px-4 py-3 text-left hover:bg-neutral-50 sm:flex-row sm:items-center sm:justify-between"
               >
                 <span className="min-w-0">
-                  <span className="block font-semibold text-neutral-900">{SUBJECT}</span>
-                  <span className="block truncate text-xs text-neutral-500">{summary(r)}</span>
+                  <span className="block font-semibold text-neutral-900">{REPORT_EMAIL_SUBJECT}</span>
+                  <span className="block truncate text-xs text-neutral-500">{reportEmailSummary(r)}</span>
                 </span>
                 <span className="shrink-0 text-xs text-neutral-400">{new Date(r.at).toLocaleString()}</span>
               </button>
               {open === r.id && (
                 <div className="border-t border-neutral-100 bg-neutral-50 px-4 py-4 text-sm text-neutral-700">
-                  <p>{summary(r)}</p>
+                  <p>{reportEmailSummary(r)}</p>
                   <button
                     type="button"
-                    onClick={() => downloadPdf(r)}
+                    onClick={() => void downloadReportPdf(r)}
                     className="mt-3 rounded-lg bg-[var(--testnix-red)] px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
                   >
                     Download PDF

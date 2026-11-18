@@ -11,10 +11,7 @@ export function reportEmailSummary(report: ReportEmailData) {
   return `Download ${report.download.toFixed(1)} Mbps · Upload ${report.upload.toFixed(1)} Mbps · Ping ${Math.round(report.ping)} ms`;
 }
 
-export async function openReportDraft(report: ReportEmailData, email: string) {
-  const recipient = email.trim();
-  if (!recipient) throw new Error("Add an email address before opening a report draft.");
-
+async function createReportPdf(report: ReportEmailData) {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const fileName = `testnix-report-${new Date(report.at).toISOString().slice(0, 10)}.pdf`;
@@ -29,6 +26,21 @@ export async function openReportDraft(report: ReportEmailData, email: string) {
   doc.text(`Download: ${report.download.toFixed(1)} Mbps`, 48, 140);
   doc.text(`Upload: ${report.upload.toFixed(1)} Mbps`, 48, 164);
   doc.text(`Ping: ${Math.round(report.ping)} ms`, 48, 188);
+
+  return { doc, fileName };
+}
+
+export async function downloadReportPdf(report: ReportEmailData) {
+  const { doc, fileName } = await createReportPdf(report);
+  doc.save(fileName);
+  return { fileName, summary: reportEmailSummary(report) };
+}
+
+export async function openReportDraft(report: ReportEmailData, email: string) {
+  const recipient = email.trim();
+  if (!recipient) throw new Error("Add an email address before opening a report draft.");
+
+  const { doc, fileName } = await createReportPdf(report);
   doc.save(fileName);
 
   const body = `Hi,\n\nAttached is my Testnix speed test report.\n${reportEmailSummary(report)}\n\nSent from Testnix.net`;
