@@ -1,66 +1,86 @@
-# 🚀 TestNix — Free Internet Speed Test
+# 🚀 TestNix — Internet Speed Test Platform
 
 <p align="center">
-  <strong>Test your internet speed. Understand your connection. Share your results.</strong>
+  <strong>Measure your speed. Monitor your connection. Stay connected.</strong>
 </p>
 
+<p align="center">
+  A modern internet speed testing platform built to help users measure, understand, and monitor their internet performance.
+</p>
 
-  <p align="center">
+<p align="center">
   <a href="https://testnix-net.vercel.app/" target="_blank">
-    🚀 Visit TestNix — https://testnix-net.vercel.app/
+    <strong>🌐 Live Link</strong>
   </a>
-    <a href="https://github.com/mdalihasanriyad/testnix">GitHub Repository</a>
+  &nbsp; • &nbsp;
+  <a href="https://github.com/mdalihasanriyad/testnix" target="_blank">
+    <strong>📂 GitHub Repository</strong>
+  </a>
 </p>
-  
 
 ---
 
-## 🌐 About TestNix
+## 🌐 Overview
 
-**TestNix** is a modern, web-based internet speed testing platform designed to help users measure, understand, and monitor their internet connection.
+**TestNix** is a modern, web-based internet speed testing platform designed to make internet performance monitoring simple, accessible, and informative.
 
-It provides a clean and user-friendly experience for checking internet performance, viewing previous results, sharing speed reports, and managing scheduled tests.
+It provides tools to test internet speed, review historical results, share performance reports, and organize scheduled tests — all through a clean and responsive interface.
 
-Whether you're checking your home Wi-Fi, mobile data, or broadband connection, TestNix makes understanding your internet performance easier.
+Whether you're using home broadband, Wi-Fi, or mobile data, TestNix helps you better understand your internet connection.
 
-## ✨ Features
+## ✨ Key Features
 
-- **Internet Speed Test** — Measure your internet connection speed.
-- **Recent Tests** — View previous speed test results.
-- **Community Board** — Share speed test results with other users.
-- **AI-Powered Insights** — Get AI-generated explanations of internet speed results.
-- **Report Inbox** — Access saved speed test reports.
-- **Scheduled Tests** — Schedule internet speed tests.
-- **PDF Reports** — Generate downloadable speed test reports.
-- **Responsive Design** — Enjoy a smooth experience across desktop, tablet, and mobile devices.
-- **Cloud Database** — Store and retrieve speed test results.
+- **Internet Speed Testing** — Measure your internet connection performance.
+- **Download & Upload Monitoring** — Understand your connection's transfer speeds.
+- **Ping Monitoring** — Evaluate network response time.
+- **Recent Test History** — Review previous speed test results.
+- **Community Board** — Share and explore internet speed results.
+- **AI-Powered Insights** — Get intelligent explanations of test results.
+- **Report Inbox** — Access and manage saved reports.
+- **Scheduled Testing** — Organize recurring internet speed tests.
+- **PDF Report Generation** — Generate downloadable speed test reports.
+- **Responsive Interface** — Optimized for desktop, tablet, and mobile devices.
+- **Cloud Database Integration** — Store and retrieve application data.
 
-## 🛠️ Tech Stack
+## 🛠️ Technology Stack
+
+TestNix is built using modern web technologies.
 
 | Technology | Purpose |
 |---|---|
-| React 19 | UI Development |
+| React 19 | User Interface |
 | TypeScript | Type Safety |
 | TanStack Start | Application Framework |
 | TanStack Router | Routing |
 | Tailwind CSS 4 | Styling |
-| Supabase | Backend and Database |
-| Drizzle ORM | Database ORM |
+| Supabase | Backend Services |
 | PostgreSQL | Database |
+| Drizzle ORM | Database Management |
 | Vercel | Deployment |
-| AI SDK | AI-Powered Features |
+| AI SDK | AI Integration |
 | Lucide React | Icons |
+| Bun | Package Management & Runtime |
+
+## 📸 Preview
+
+<p align="center">
+  <a href="https://testnix-net.vercel.app/">
+    <strong>Visit TestNix to explore the live application</strong>
+  </a>
+</p>
 
 ## 🚀 Getting Started
 
-Follow these steps to run TestNix locally.
+Follow the instructions below to run TestNix locally.
 
 ### Prerequisites
 
-- Node.js
-- Bun
-- Git
-- Supabase account
+Make sure you have installed:
+
+- [Node.js](https://nodejs.org/)
+- [Bun](https://bun.sh/)
+- [Git](https://git-scm.com/)
+- A [Supabase](https://supabase.com/) account
 
 ### 1. Clone the Repository
 
@@ -68,7 +88,7 @@ Follow these steps to run TestNix locally.
 git clone https://github.com/mdalihasanriyad/testnix.git
 ```
 
-### 2. Navigate to the Project
+### 2. Navigate to the Project Directory
 
 ```bash
 cd testnix
@@ -82,7 +102,7 @@ bun install
 
 ### 4. Configure Environment Variables
 
-Create a `.env` file in the project root:
+Create a `.env` file in the root directory and configure your Supabase credentials.
 
 ```env
 SUPABASE_PROJECT_ID=your_supabase_project_id
@@ -94,9 +114,11 @@ VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 VITE_SUPABASE_URL=https://your_project.supabase.co
 ```
 
-Add any additional API keys required by the features you enable.
+Add any other environment variables required by the features you enable.
 
-### 5. Start Development Server
+**Security Note:** Never expose private API keys, database credentials, or Supabase service-role keys in client-side code or public repositories.
+
+### 5. Start the Development Server
 
 ```bash
 bun run dev
@@ -108,7 +130,7 @@ bun run dev
 bun run build
 ```
 
-### 7. Preview Production Build
+### 7. Preview the Production Build
 
 ```bash
 bun run preview
@@ -118,75 +140,94 @@ bun run preview
 
 ```text
 testnix/
-├── public/          # Static assets
-├── src/             # Application source code
-├── drizzle/         # Database schema and migrations
-├── supabase/        # Supabase configuration
-├── .lovable/        # Lovable project configuration
-├── AGENTS.md        # AI development instructions
-├── drizzle.config.ts
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── README.md
+├── public/             # Static assets
+├── src/                # Application source code
+├── drizzle/            # Database schema and migrations
+├── supabase/           # Supabase configuration
+├── .lovable/           # Lovable configuration
+├── AGENTS.md           # AI development instructions
+├── drizzle.config.ts   # Drizzle ORM configuration
+├── package.json        # Project dependencies
+├── tsconfig.json       # TypeScript configuration
+├── vite.config.ts      # Vite configuration
+├── bun.lock            # Bun lockfile
+└── README.md           # Project documentation
 ```
 
-## 🔐 Environment Variables
+## 🔐 Security & Configuration
 
-TestNix uses environment variables to configure its backend services.
+Security is an important part of TestNix.
 
-Never commit private API keys, database passwords, or service-role keys to a public repository.
+- Keep `.env` files out of version control.
+- Use `.gitignore` to prevent accidental credential exposure.
+- Store production secrets in Vercel Environment Variables.
+- Use appropriate Supabase Row Level Security (RLS) policies.
+- Never expose server-side credentials in frontend code.
 
-Keep your local `.env` file private and use Vercel Environment Variables for production deployments.
+## ☁️ Deployment
 
-## 🚀 Deployment
+TestNix is deployed using **Vercel**.
 
-TestNix is deployed on **Vercel**.
-
-To deploy your own version:
+You can deploy your own instance:
 
 1. Fork this repository.
-2. Import the repository into Vercel.
+2. Import the repository into your Vercel account.
 3. Configure the required environment variables.
-4. Deploy your application.
+4. Deploy the application.
+5. Connect a custom domain if needed.
 
-## 🗺️ Project Roadmap
+**Live Website:** https://testnix-net.vercel.app/
 
-- [x] Internet speed testing interface
-- [x] Community speed test sharing
-- [x] AI-generated result explanations
-- [x] Cloud-based speed result storage
-- [x] Report inbox
-- [x] Scheduled test workflow
-- [ ] Complete automated scheduled report emails
+## 🗺️ Roadmap
+
+The project continues to evolve with new features and improvements.
+
+- [x] Modern internet speed testing interface
+- [x] Speed test result history
+- [x] Community speed sharing
+- [x] AI-powered result insights
+- [x] Report management
+- [x] Scheduled testing workflow
+- [ ] Automated scheduled report emails
+- [ ] Email delivery with PDF report links
 - [ ] Custom domain integration
-- [ ] Automated email delivery with PDF report links
-- [ ] Further performance and UX improvements
+- [ ] Additional performance improvements
+- [ ] Further UI/UX enhancements
 
 ## 🤝 Contributing
 
-Contributions, suggestions, and feedback are welcome!
+Contributions, suggestions, and bug reports are welcome.
 
-If you find a bug or have an idea for improvement:
+If you'd like to contribute:
 
 1. Fork the repository.
-2. Create a new branch.
+2. Create a new feature branch.
 3. Make your changes.
-4. Submit a pull request.
+4. Commit your changes.
+5. Submit a pull request.
+
+For major changes, consider opening an issue first to discuss your ideas.
 
 ## 📄 License
 
-This project is currently maintained by its author. Please contact the repository owner regarding reuse and licensing.
+No open-source license has currently been specified for this project. All rights are reserved by the project owner unless otherwise stated.
 
 ## 👨‍💻 Author
 
 **Md. Ali Hasan Riyad**
 
+Full Stack Developer | Bangladesh
+
 - GitHub: [@mdalihasanriyad](https://github.com/mdalihasanriyad)
 - Project: [TestNix](https://testnix-net.vercel.app/)
+- Repository: [github.com/mdalihasanriyad/testnix](https://github.com/mdalihasanriyad/testnix)
 
 ---
 
 <p align="center">
-  Made with ❤️ by Md. Ali Hasan Riyad
+  <strong>Built with ❤️ by Md. Ali Hasan Riyad</strong>
+</p>
+
+<p align="center">
+  <a href="https://testnix-net.vercel.app/">TestNix</a> — Making Internet Performance Easier to Understand.
 </p>
