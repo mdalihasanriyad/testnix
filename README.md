@@ -4,10 +4,14 @@
   <strong>Test your internet speed. Understand your connection. Share your results.</strong>
 </p>
 
-<p align="center">
-  <a href="https://testnix-net.vercel.app/">Live Demo</a> ·
-  <a href="https://github.com/mdalihasanriyad/testnix">GitHub Repository</a>
+
+  <p align="center">
+  <a href="https://testnix-net.vercel.app/" target="_blank">
+    🚀 Visit TestNix — https://testnix-net.vercel.app/
+  </a>
+    <a href="https://github.com/mdalihasanriyad/testnix">GitHub Repository</a>
 </p>
+  
 
 ---
 
